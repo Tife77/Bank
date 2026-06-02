@@ -18,8 +18,14 @@ import ChaseDashboard from "./dashboard.jsx";
 import SignupPage from "./signup.jsx";
 import SignInPage from "./signin.jsx";
 import logo from "./assets/onenevada.svg";
-import report from "./report.jsx"
-import transaction from "./transaction.jsx"
+import ReportPage from "./report.jsx";
+import TransactionsPage from "./transaction.jsx";
+import SettingsPage from "./settings.jsx";
+import TransferPage from "./transfer.jsx";
+import AchPage from "./ach.jsx";
+import DepositPage from "./deposit.jsx";
+import StatementsPage from "./statements.jsx";
+import WireMoneyPage from "./wiremoney.jsx";
 
 
 
@@ -135,7 +141,6 @@ function CarouselSlider() {
           />
         </div>
       </div>
-      <ChatWidget />
     </div>
   );
 }
@@ -431,8 +436,11 @@ function Header() {
         </svg>
       </button>
             <span className="h-6 w-px bg-slate-300" />
-            <button className="text-blue-900 font-semibold hover:text-red-600 transition bg-transparent border-none">Open an Account</button>
-            <Link to="/dashboard" className="rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-md hover:bg-red-700 transition">
+             <Link to="/signup" className="text-blue-900 font-semibold hover:text-red-600 transition bg-transparent border-none">
+              Open an Account
+            </Link>
+    
+            <Link to="/signin" className="rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-md hover:bg-red-700 transition">
               Log In
             </Link>
           </div>
@@ -706,10 +714,20 @@ function App() {
           <Route path="/cheque" element={<ChequePage />} />
           <Route path="/card" element={<CardPage />} />
           <Route path="/dashboard" element={<ChaseDashboard />} />
+          <Route path="/ach" element={<AchPage />} />
+          <Route path="/pay-bills" element={<AchPage />} />
+          <Route path="/deposit" element={<DepositPage />} />
+          <Route path="/statements" element={<StatementsPage />} />
+          <Route path="/wire-money" element={<WireMoneyPage />} />
+          <Route path="/transfer" element={<TransferPage />} />
+          <Route path="/transaction" element={<TransactionsPage />} />
+          <Route path="/report" element={<ReportPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/" element={<HomePage />} />
         </Routes>
+        <ChatWidget />
       </div>
     </BrowserRouter>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logo from "./assets/onenevada.svg";
 
 export default function SignInPage() {
   const [username, setUsername] = useState("");
@@ -20,15 +21,27 @@ export default function SignInPage() {
     <div style={{ minHeight: "100vh", backgroundColor: "#EBF5FB", display: "flex", flexDirection: "column", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
 
       {/* ── Top Bar ── */}
-      <header style={{ backgroundColor: "#005EB8", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Logo */}
-          <div style={{ width: 44, height: 44, backgroundColor: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ width: 18, height: 18, backgroundColor: "#005EB8", borderRadius: 3, transform: "rotate(45deg)" }} />
-          </div>
-          <div>
-            <div style={{ color: "white", fontSize: 18, fontWeight: 700, letterSpacing: 0.5 }}>One Nevada</div>
-            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, fontWeight: 500, letterSpacing: 1, textTransform: "uppercase" }}>Credit Union</div>
+      <header className="bg-[white] h-20 flex items-center justify-between px-6 shadow-md">
+        <div className="flex items-center gap-5 text-black">
+          <button className="text-3xl hover:opacity-80">☰</button>
+          <button className="text-2xl font-medium hover:opacity-80" onClick={() => window.location.href = "/dashboard"}>
+            Exit
+          </button>
+          <button
+            onClick={() => window.location.href = "/signin"}
+            className="text-2xl font-medium hover:opacity-80 text-black"
+          >
+            Sign In
+          </button>
+        </div>
+
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+          <div className="w-full h-14 bg-white flex items-center justify-center overflow-hidden">
+            <img
+              src={logo}
+              alt="One Nevada Credit Union"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
       </header>
@@ -42,7 +55,7 @@ export default function SignInPage() {
             Welcome back
           </h1>
           <p style={{ fontSize: 14, color: "#6b7f94", textAlign: "center", margin: "0 0 24px" }}>
-            Sign in to your One Nevada account
+            Sign in to your One Nevada Credit Union account
           </p>
 
           <div style={{ height: 1, backgroundColor: "#e2edf6", marginBottom: 24 }} />

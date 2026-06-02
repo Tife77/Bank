@@ -23,11 +23,11 @@ const transactions = [
 ];
 
 const quickActions = [
-  { label: "Pay Bills", iconType: "bill" },
-  { label: "Transfer", iconType: "transfer" },
-  { label: "Deposit", iconType: "deposit" },
-  { label: "Statements", iconType: "statement" },
-  { label: "Wire Money", iconType: "wire" },
+  { label: "ACH", iconType: "bill", path: "/ach" },
+  { label: "Transfer", iconType: "transfer", path: "/transfer" },
+  { label: "Deposit", iconType: "deposit", path: "/deposit" },
+  { label: "Statements", iconType: "statement", path: "/statements" },
+  { label: "Wire Money", iconType: "wire", path: "/wire-money" },
 ];
 
 const spendingCategories = [
@@ -141,8 +141,9 @@ export default function ChaseDashboard() {
           {/* Center Navigation - Explicit route targets for each nav element */}
           <nav className="hidden lg:flex items-center gap-8">
             {[
-              { label: "Account", path: "/" },
+              { label: "Account", path: "/dashboard" },
               { label: "Cash Cheque", path: "/cheque" },
+              { label: "Transfer", path: "/transfer" },
               { label: "Transaction", path: "/transaction" },
               { label: "Card", path: "/card" },
               { label: "Report Issue", path: "/report" },
@@ -165,9 +166,9 @@ export default function ChaseDashboard() {
           {/* Right Buttons */}
           <div className="flex items-center gap-3">
             {/* Settings */}
-            <button className="bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 text-[#0a2a66]">
+            <Link to="/settings" className="bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 text-[#0a2a66]">
               <Icon type="settings" className="w-4 h-4 text-[#0a2a66]" /> Settings
-            </button>
+            </Link>
 
             {/* Logout */}
             <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md text-white">
@@ -209,7 +210,7 @@ export default function ChaseDashboard() {
             <div className="flex items-center gap-3">
               <span className="text-amber-500 text-xl">⚠️</span>
               <p className="text-sm text-amber-800 font-medium">
-                <strong>Security tip:</strong> Chase will never ask for your password, PIN, or one-time code.
+                <strong>Security tip:</strong> One Nevada Credit Union will never ask for your password, PIN, or one-time code.
               </p>
             </div>
             <button onClick={() => setAlertDismissed(true)} className="text-amber-400 hover:text-amber-600 text-lg font-bold flex-shrink-0">
@@ -239,7 +240,11 @@ export default function ChaseDashboard() {
               <h2 className="text-base font-black text-[#1a3a5c] tracking-tight mb-4">Quick Actions</h2>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {quickActions.map((qa) => (
-                  <button key={qa.label} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-blue-50 transition-colors group">
+                  <Link
+                    key={qa.label}
+                    to={qa.path || "#"}
+                    className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-blue-50 transition-colors group"
+                  >
                     <div className="w-11 h-11 rounded-full bg-gray-50 text-gray-500 group-hover:bg-[#117ACA] group-hover:text-white flex items-center justify-center transition-colors">
                       <span className="group-hover:scale-110 transition-transform inline-block">
                         <Icon type={qa.iconType} className="w-5 h-5" />
@@ -248,7 +253,7 @@ export default function ChaseDashboard() {
                     <span className="text-xs font-semibold text-gray-600 group-hover:text-[#117ACA] text-center leading-tight transition-colors">
                       {qa.label}
                     </span>
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -310,7 +315,7 @@ export default function ChaseDashboard() {
                 ))}
               </div>
               <div className="grid grid-cols-2 gap-2 mt-4">
-                <button className="bg-[#117ACA] text-white text-sm font-bold py-2.5 rounded-xl hover:bg-[#0a5fa0] transition-colors">Pay Bill</button>
+                <button className="bg-[#117ACA] text-white text-sm font-bold py-2.5 rounded-xl hover:bg-[#0a5fa0] transition-colors">ACH</button>
                 <button className="border-2 border-[#117ACA] text-[#117ACA] text-sm font-bold py-2.5 rounded-xl hover:bg-blue-50 transition-colors">Transfer</button>
               </div>
             </div>

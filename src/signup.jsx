@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserCheck, SquareCheck, SmartphoneNfc } from 'lucide-react';
+import { UserCheck, SquareCheck } from "lucide-react";
 import logo from "./assets/onenevada.svg";
 
 
@@ -26,9 +26,8 @@ export default function SignupPage() {
   const navigate = useNavigate();
 
   const handleGoToDashboard = () => {
-  navigate('/dashboard'); 
-};
-
+    navigate("/dashboard");
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
@@ -43,31 +42,29 @@ export default function SignupPage() {
           <button className="text-3xl hover:opacity-80">
             ☰
           </button>
-
-          {/* Exit */}
           <button className="text-2xl font-medium hover:opacity-80" onClick={handleGoToDashboard}>
-  Exit
-</button>
-<button
-  onClick={() => navigate('/SignInPage')}
-  className="text-2xl font-medium hover:opacity-80 text-black"
->
-  Sign In
-</button>
+            Exit
+          </button>
+
+          <button
+            onClick={() => navigate("/signin")}
+            className="text-2xl font-medium hover:opacity-80 text-black"
+          >
+            Sign In
+          </button>
+
         </div>
 
         {/* Center Logo */}
 {/* Center Logo */}
 <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
 
-  <div className="w-full h-14 bg-white  flex items-center justify-center  overflow-hidden">
-    
+  <div className="w-full h-14 bg-white flex items-center justify-center overflow-hidden">
     <img
       src={logo}
-      alt="Chase Logo"
+      alt="One Nevada Credit Union"
       className="w-full h-full object-contain"
     />
-
   </div>
 
 </div>

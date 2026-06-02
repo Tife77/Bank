@@ -92,6 +92,19 @@ export default function ChequeSection() {
             </Link>
 
             <Link
+              to="/transfer"
+              className={`text-sm font-semibold transition-all duration-200 hover:text-[#117ACA]
+              ${
+                activeNav === "Transfer"
+                  ? "text-[#041a49] border-b-2 border-[#041a49] pb-1"
+                  : "text-[#041a49]"
+              }`}
+              onClick={() => setActiveNav("Transfer")}
+            >
+              Transfer
+            </Link>
+
+            <Link
               to="/card"
               className={`text-sm font-semibold transition-all duration-200 hover:text-[#117ACA]
               ${
@@ -121,9 +134,9 @@ export default function ChequeSection() {
           {/* Right Side */}
           <div className="flex items-center gap-3">
             {/* Settings */}
-            <button className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
+            <Link to="/settings" className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
               ⚙️ Settings
-            </button>
+            </Link>
 
             {/* Logout */}
             <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
