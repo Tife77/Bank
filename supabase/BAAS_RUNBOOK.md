@@ -1,4 +1,28 @@
-# Real-Money Architecture — Increase (BaaS)
+# Real-Money Architecture — BaaS
+
+> **CURRENT PROVIDER: Unit** (`api.s.unit.sh` sandbox). We switched from Increase
+> because Increase gated third-party customer onboarding. Unit's sandbox supports
+> onboarding individual customers immediately. The Edge Functions
+> (`onboard`, `transfer`, `increase-webhook`) now call Unit via `_shared/unit.ts`.
+>
+> **Secrets for Unit:**
+> ```bash
+> supabase secrets set UNIT_API_TOKEN=<your sandbox org token>
+> supabase secrets set UNIT_BASE_URL=https://api.s.unit.sh
+> supabase secrets set UNIT_WEBHOOK_SECRET=<from Unit webhook config>   # later
+> ```
+> **Get a token:** sign up at https://www.unit.co / the Unit dashboard, switch to
+> **Sandbox**, create an **API token** (org-level). Then redeploy the functions.
+>
+> We reuse the existing DB columns: `profiles.increase_entity_id` = Unit customerId,
+> `accounts.increase_account_id` = Unit accountId, `transfers.increase_transfer_id`
+> = Unit paymentId. So **no new SQL** beyond `schema_baas.sql`.
+>
+> The Increase-specific notes below are kept for reference.
+
+---
+
+# (Reference) Increase architecture notes
 
 This document describes how the Bank app moves from a **simulation** (balances are
 numbers in Postgres) to a **real fintech** where money is held and moved by a
