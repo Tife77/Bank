@@ -31,7 +31,12 @@ export async function increase(path: string, init: RequestInit = {}) {
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
-    throw new Error(data?.title || data?.detail || `Increase error ${res.status}`);
+    // Surface Increase's full error detail for debugging.
+    const detail = data?.detail || data?.title || `HTTP ${res.status}`;
+    const err = new Error(`${res.status} ${detail}`);
+    // @ts-ignore attach raw body
+    err.increase = data;
+    throw err;
   }
   return data;
 }

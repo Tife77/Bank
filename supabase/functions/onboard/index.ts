@@ -29,36 +29,49 @@ Deno.serve(async (req) => {
       return json({ error: "User already onboarded", entity_id: profile.increase_entity_id }, 409);
     }
 
-    // 1) Create the Entity (KYC identity) in Increase.
-    const entity = await increase("/entities", {
-      method: "POST",
-      body: JSON.stringify({
-        structure: "natural_person",
-        natural_person: {
-          name: `${first_name} ${last_name}`,
-          date_of_birth,
-          address: {
-            line1: address.line1,
-            city: address.city,
-            state: address.state,
-            zip: address.zip,
+    let step = "create_entity";
+    let entity, account, acctNumber;
+    try {
+      // 1) Create the Entity (KYC identity) in Increase.
+      entity = await increase("/entities", {
+        method: "POST",
+        body: JSON.stringify({
+          structure: "natural_person",
+          natural_person: {
+            name: `${first_name} ${last_name}`,
+            date_of_birth,
+            address: {
+              line1: address.line1,
+              city: address.city,
+              state: address.state,
+              zip: address.zip,
+            },
+            identification: { method: "social_security_number", number: ssn },
           },
-          identification: { method: "social_security_number", number: ssn },
-        },
-      }),
-    });
+        }),
+      });
 
-    // 2) Create the Account, owned by that Entity.
-    const account = await increase("/accounts", {
-      method: "POST",
-      body: JSON.stringify({ entity_id: entity.id, name: "Total Checking" }),
-    });
+      // 2) Create the Account, owned by that Entity.
+      step = "create_account";
+      account = await increase("/accounts", {
+        method: "POST",
+        body: JSON.stringify({ entity_id: entity.id, name: "Total Checking" }),
+      });
 
-    // 3) Create an Account Number (routing + account number to receive ACH).
-    const acctNumber = await increase("/account_numbers", {
-      method: "POST",
-      body: JSON.stringify({ account_id: account.id, name: "Primary" }),
-    });
+      // 3) Create an Account Number (routing + account number to receive ACH).
+      step = "create_account_number";
+      acctNumber = await increase("/account_numbers", {
+        method: "POST",
+        body: JSON.stringify({ account_id: account.id, name: "Primary" }),
+      });
+    } catch (e) {
+      return json({
+        error: String(e?.message ?? e),
+        failed_step: step,
+        increase_detail: e?.increase ?? null,
+        partial: { entity_id: entity?.id, account_id: account?.id },
+      }, 500);
+    }
 
     // 4) Mirror into Postgres.
     await supa.from("profiles").update({
