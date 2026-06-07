@@ -2,15 +2,31 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserCheck, SquareCheck } from "lucide-react";
 import logo from "./assets/onenevada.svg";
+import { supabase } from "./supabaseClient";
 
+const empty = {
+  first_name: "", middle_name: "", last_name: "", date_of_birth: "",
+  email: "", password: "", phone: "", address: "", city: "", state: "", zip: "",
+};
 
 export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [documentationType, setDocumentationType] = useState("");
   const [ssnInput, setSsnInput] = useState("");
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [form, setForm] = useState(empty);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const handleNext = () => {
+    setError("");
+    if (!form.first_name.trim() || !form.last_name.trim() || !form.email.trim() || form.password.length < 6) {
+      setError("Please fill in first name, last name, a valid email, and a password (min 6 characters).");
+      return;
+    }
     setCurrentStep(2);
   };
 
@@ -18,9 +34,30 @@ export default function SignupPage() {
     setCurrentStep(1);
   };
 
-  const handleSubmit = () => {
-    console.log("Form submitted with documentation type:", documentationType);
-    // TODO: Submit form to backend
+  const handleSubmit = async () => {
+    setError("");
+    setSubmitting(true);
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: form.email.trim(),
+      password: form.password,
+      options: {
+        data: {
+          first_name: form.first_name, middle_name: form.middle_name, last_name: form.last_name,
+          phone: form.phone, address: form.address, city: form.city, state: form.state,
+          zip: form.zip, date_of_birth: form.date_of_birth,
+        },
+      },
+    });
+    setSubmitting(false);
+    if (signUpError) {
+      setError(signUpError.message || "Unable to create account.");
+      return;
+    }
+    if (data.session) {
+      navigate("/dashboard"); // email confirmation disabled — straight in
+    } else {
+      setNotice("Account created! Please check your email to confirm, then sign in.");
+    }
   };
 
   const navigate = useNavigate();
@@ -157,6 +194,8 @@ export default function SignupPage() {
       <input
         type="text"
         placeholder="Enter first name"
+        value={form.first_name}
+        onChange={set("first_name")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -170,6 +209,8 @@ export default function SignupPage() {
       <input
         type="text"
         placeholder="Enter middle name"
+        value={form.middle_name}
+        onChange={set("middle_name")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -183,6 +224,8 @@ export default function SignupPage() {
       <input
         type="text"
         placeholder="Enter last name"
+        value={form.last_name}
+        onChange={set("last_name")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -216,6 +259,8 @@ export default function SignupPage() {
       <div className="relative">
         <input
           type="date"
+          value={form.date_of_birth}
+          onChange={set("date_of_birth")}
           className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
         />
         <svg className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -329,6 +374,24 @@ export default function SignupPage() {
       <input
         type="email"
         placeholder="Enter email address"
+        value={form.email}
+        onChange={set("email")}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
+      />
+    </div>
+
+    {/* Password */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        Password
+      </label>
+
+      <input
+        type="password"
+        placeholder="Create a password (min 6 characters)"
+        value={form.password}
+        onChange={set("password")}
+        autoComplete="new-password"
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -342,6 +405,8 @@ export default function SignupPage() {
       <input
         type="tel"
         placeholder="Enter phone number"
+        value={form.phone}
+        onChange={set("phone")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -355,6 +420,8 @@ export default function SignupPage() {
       <input
         type="text"
         placeholder="Enter street address"
+        value={form.address}
+        onChange={set("address")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -368,6 +435,8 @@ export default function SignupPage() {
       <input
         type="text"
         placeholder="Enter zip code"
+        value={form.zip}
+        onChange={set("zip")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -381,6 +450,8 @@ export default function SignupPage() {
       <input
         type="text"
         placeholder="Enter city"
+        value={form.city}
+        onChange={set("city")}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900"
       />
     </div>
@@ -391,8 +462,8 @@ export default function SignupPage() {
         State
       </label>
 
-      <select className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900">
-        <option>Select state</option>
+      <select value={form.state} onChange={set("state")} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#005EB8] focus:border-[#005EB8] text-gray-900">
+        <option value="">Select state</option>
         <option>California</option>
         <option>Texas</option>
         <option>Florida</option>
@@ -448,6 +519,11 @@ export default function SignupPage() {
     </div>
 
   </div>
+
+  {/* Error */}
+  {error && currentStep === 1 && (
+    <div className="mt-6 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">⚠ {error}</div>
+  )}
 
   {/* Next Button */}
   <div className="flex justify-end mt-10">
@@ -657,6 +733,14 @@ export default function SignupPage() {
 
   </div>
 
+  {/* Error / Notice */}
+  {error && (
+    <div className="mt-6 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">⚠ {error}</div>
+  )}
+  {notice && (
+    <div className="mt-6 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3">✓ {notice}</div>
+  )}
+
   {/* Action Buttons */}
   <div className="flex justify-between mt-10 pt-6 border-t border-gray-200">
     <button
@@ -669,10 +753,10 @@ export default function SignupPage() {
     <button
       type="button"
       onClick={handleSubmit}
-      disabled={!documentationType}
+      disabled={!documentationType || submitting}
       className="px-8 py-3 bg-[#005EB8] text-white rounded-md font-medium hover:bg-[#004a96] transition disabled:bg-gray-400 disabled:cursor-not-allowed"
     >
-      Submit
+      {submitting ? "Creating account…" : "Submit"}
     </button>
   </div>
 </div>

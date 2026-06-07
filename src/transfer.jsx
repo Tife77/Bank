@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "./supabaseClient";
 import {
   ArrowLeft,
   Building2,
@@ -14,8 +15,7 @@ import {
   X,
 } from "lucide-react";
 import logo from "./assets/onenevada.svg";
-
-const user = { name: "Marcus Johnson", initials: "MJ" };
+import { usePageUser } from "./pageHelpers";
 
 const navItems = [
   { label: "Account", path: "/dashboard" },
@@ -26,15 +26,7 @@ const navItems = [
   { label: "Report Issue", path: "/report" },
 ];
 
-const internalAccounts = [
-  { id: "checking", name: "TOTAL CHECKING", holder: "Marcus Johnson", mask: "4821", balance: 8452.37, type: "Internal account" },
-  { id: "savings", name: "PRIMARY SAVINGS", holder: "Marcus Johnson", mask: "9204", balance: 24310.0, type: "Internal account" },
-];
-
-const externalAccountsSeed = [
-  { id: "wells", name: "Anthony Wells Fargo", bank: "Wells Fargo", mask: "1440", delivery: "Real-time", type: "External account" },
-  { id: "chase", name: "Anthony Chase", bank: "JPMorgan Chase Bank National Association", mask: "9076", delivery: "Real-time", type: "External account" },
-];
+const externalAccountsSeed = [];
 
 const popularBanks = [
   "Bank of America",
@@ -51,6 +43,7 @@ const formatCurrency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value || 0));
 
 function Header() {
+  const { user, logout } = usePageUser();
   return (
     <header className="w-full bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="px-6 h-20 flex items-center justify-between">
@@ -76,7 +69,7 @@ function Header() {
           <Link to="/settings" className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold">
             Settings
           </Link>
-          <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
+          <button onClick={logout} className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
             Logout
           </button>
           <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-full px-3 py-2 bg-white">
@@ -539,7 +532,30 @@ function InternationalReviewSheet({ form, account, onBack, onConfirm, onClose })
 export default function TransferPage() {
   const [step, setStep] = useState("schedule");
   const [sheet, setSheet] = useState(null);
+  const [internalAccounts, setInternalAccounts] = useState([]);
   const [externalAccounts, setExternalAccounts] = useState(externalAccountsSeed);
+  const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const [{ data: profile }, { data: accts }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", auth.user.id).single(),
+        supabase.from("accounts").select("*").eq("user_id", auth.user.id).order("created_at"),
+      ]);
+      const mapped = (accts || []).map((a) => ({
+        id: a.id, name: (a.type || "").toUpperCase(), holder: profile?.full_name || "",
+        mask: (a.account_number || "").replace(/\D/g, "").slice(-4),
+        balance: Number(a.balance), type: "Internal account",
+      }));
+      setInternalAccounts(mapped);
+      if (mapped[0]) {
+        setForm((f) => ({ ...f, fromId: mapped[0].id }));
+        setInternationalForm((f) => ({ ...f, fromId: mapped[0].id }));
+      }
+    })();
+  }, []);
   const [addStep, setAddStep] = useState("bank");
   const [addReturnSheet, setAddReturnSheet] = useState("to");
   const [internationalForm, setInternationalForm] = useState({
@@ -573,9 +589,10 @@ export default function TransferPage() {
   });
 
   const allAccounts = useMemo(() => [...internalAccounts, ...externalAccounts], [externalAccounts]);
-  const fromAccount = allAccounts.find((account) => account.id === form.fromId) || internalAccounts[0];
+  const emptyAcct = { name: "", mask: "", balance: 0, type: "Internal account" };
+  const fromAccount = allAccounts.find((account) => account.id === form.fromId) || internalAccounts[0] || emptyAcct;
   const toAccount = allAccounts.find((account) => account.id === form.toId);
-  const internationalFromAccount = internalAccounts.find((account) => account.id === internationalForm.fromId) || internalAccounts[0];
+  const internationalFromAccount = internalAccounts.find((account) => account.id === internationalForm.fromId) || internalAccounts[0] || emptyAcct;
   const amount = Number(form.amount || 0);
   const canTransfer = amount > 0 && form.fromId && form.toId && form.fromId !== form.toId;
   const memoRemaining = 32 - form.memo.length;
@@ -623,6 +640,49 @@ export default function TransferPage() {
     setExternalAccounts((current) => [...current, newAccount]);
     setForm((current) => ({ ...current, toId: newAccount.id }));
     setSheet(null);
+  };
+
+  const handleConfirmTransfer = async () => {
+    setSubmitError("");
+    const isInternal = toAccount?.type === "Internal account";
+    const { error } = await supabase.rpc("make_transfer", {
+      p_from: form.fromId,
+      p_amount: amount,
+      p_kind: isInternal ? "internal" : "external",
+      p_to_account: isInternal ? form.toId : null,
+      p_recipient_name: isInternal ? null : toAccount?.name,
+      p_recipient_bank: isInternal ? null : toAccount?.bank,
+      p_recipient_acct: isInternal ? null : toAccount?.mask,
+      p_memo: form.memo || null,
+    });
+    if (error) {
+      setSubmitError(error.message || "Transfer failed.");
+      setSheet(null);
+      return;
+    }
+    setSheet(null);
+    setStep("confirmation");
+  };
+
+  const handleConfirmInternational = async () => {
+    setSubmitError("");
+    const { error } = await supabase.rpc("make_transfer", {
+      p_from: internationalForm.fromId,
+      p_amount: Number(internationalForm.amount || 0),
+      p_kind: "wire",
+      p_to_account: null,
+      p_recipient_name: internationalForm.beneficiary,
+      p_recipient_bank: internationalForm.bankName,
+      p_recipient_acct: internationalForm.accountNumber,
+      p_memo: internationalForm.purpose || null,
+    });
+    if (error) {
+      setSubmitError(error.message || "Transfer failed.");
+      setSheet(null);
+      return;
+    }
+    setSheet(null);
+    setStep("internationalConfirmation");
   };
 
   if (step === "confirmation" && toAccount) {
@@ -744,6 +804,9 @@ export default function TransferPage() {
               >
               Transfer
           </button>
+          {submitError && (
+            <p className="mt-3 rounded bg-red-50 border border-red-200 px-3 py-2 text-sm font-semibold text-red-700">⚠ {submitError}</p>
+          )}
           <button
             type="button"
             onClick={() => setSheet("international")}
@@ -859,10 +922,7 @@ export default function TransferPage() {
           form={internationalForm}
           account={internationalFromAccount}
           onBack={() => setSheet("international")}
-          onConfirm={() => {
-            setSheet(null);
-            setStep("internationalConfirmation");
-          }}
+          onConfirm={handleConfirmInternational}
           onClose={() => setSheet(null)}
         />
       )}
@@ -873,10 +933,7 @@ export default function TransferPage() {
           fromAccount={fromAccount}
           toAccount={toAccount}
           form={form}
-          onConfirm={() => {
-            setSheet(null);
-            setStep("confirmation");
-          }}
+          onConfirm={handleConfirmTransfer}
           onClose={() => setSheet(null)}
         />
       )}

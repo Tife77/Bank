@@ -1,26 +1,7 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "./assets/onenevada.svg";
-
-// ── Mock Data ──────────────────────────────────────────────────
-const user = { name: "Marcus Johnson", initials: "MJ", lastLogin: "Today, 9:14 AM" };
-
-const accounts = [
-  { id: 1, type: "Total Checking", number: "••••4821", balance: 8452.37, available: 8252.37, color: "from-[#117ACA] to-[#0a5fa0]" },
-  { id: 2, type: "Sapphire Savings", number: "••••9204", balance: 24310.00, available: 24310.00, color: "from-[#1a3a5c] to-[#0d2640]" },
-  { id: 3, type: "Freedom Unlimited", number: "••••3377", balance: -1284.50, available: 16715.50, color: "from-[#2d6a9f] to-[#1b4e7a]", credit: true },
-];
-
-const transactions = [
-  { id: 1, merchant: "Whole Foods Market", category: "Groceries", date: "Today", amount: -87.43, iconType: "cart" },
-  { id: 2, merchant: "Direct Deposit – ACME Corp", category: "Income", date: "Yesterday", amount: 3250.00, iconType: "briefcase" },
-  { id: 3, merchant: "Netflix", category: "Entertainment", date: "May 17", amount: -15.99, iconType: "film" },
-  { id: 4, merchant: "Shell Gas Station", category: "Auto & Gas", date: "May 17", amount: -62.10, iconType: "gas" },
-  { id: 5, merchant: "Amazon.com", category: "Shopping", date: "May 16", amount: -134.99, iconType: "box" },
-  { id: 6, merchant: "Zelle Transfer – Sarah M.", category: "Transfer", date: "May 15", amount: 200.00, iconType: "transfer" },
-  { id: 7, merchant: "Spotify", category: "Entertainment", date: "May 14", amount: -9.99, iconType: "music" },
-  { id: 8, merchant: "CVS Pharmacy", category: "Health", date: "May 13", amount: -28.44, iconType: "pill" },
-];
+import { supabase } from "./supabaseClient";
 
 const quickActions = [
   { label: "ACH", iconType: "bill", path: "/ach" },
@@ -123,8 +104,63 @@ export default function ChaseDashboard() {
   const [selectedAcct, setSelectedAcct] = useState(0);
   const [activeNav, setActiveNav] = useState("Account");
   const [alertDismissed, setAlertDismissed] = useState(false);
+  const [user, setUser] = useState({ name: "", initials: "", lastLogin: "" });
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+
+      const [{ data: profile }, { data: accts }, { data: txns }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", auth.user.id).single(),
+        supabase.from("accounts").select("*").eq("user_id", auth.user.id).order("created_at"),
+        supabase.from("transactions").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(15),
+      ]);
+
+      if (profile) {
+        setUser({
+          name: profile.full_name || profile.email,
+          initials: profile.initials || "U",
+          lastLogin: profile.last_login ? new Date(profile.last_login).toLocaleString() : "First login",
+        });
+      }
+      setAccounts(
+        (accts || []).map((a) => ({
+          id: a.id, type: a.type, number: a.account_number,
+          balance: Number(a.balance), available: Number(a.available),
+          color: a.color, credit: a.is_credit,
+        }))
+      );
+      setTransactions(
+        (txns || []).map((t) => ({
+          id: t.id, merchant: t.merchant, category: t.category,
+          date: new Date(t.created_at).toLocaleDateString(),
+          amount: Number(t.amount), iconType: t.icon_type || "box",
+        }))
+      );
+      setLoading(false);
+    })();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/signin");
+  };
 
   const totalBalance = accounts.reduce((s, a) => s + (a.balance > 0 ? a.balance : 0), 0);
+  const current = accounts[selectedAcct];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#D6EAF8] flex items-center justify-center text-[#117ACA] font-semibold">
+        Loading your accounts…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#D6EAF8] font-sans">
@@ -171,7 +207,7 @@ export default function ChaseDashboard() {
             </Link>
 
             {/* Logout */}
-            <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md text-white">
+            <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md text-white">
               <Icon type="logout" className="w-4 h-4 text-white" /> Logout
             </button>
 
@@ -296,28 +332,34 @@ export default function ChaseDashboard() {
             {/* Selected Account Detail */}
             <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
               <h2 className="text-base font-black text-[#1a3a5c] tracking-tight mb-4">Account Details</h2>
-              <div className={`rounded-xl bg-gradient-to-br ${accounts[selectedAcct].color} p-4 text-white mb-4`}>
-                <p className="text-xs font-semibold tracking-widest uppercase text-white/60">{accounts[selectedAcct].type}</p>
-                <p className="text-xl font-black mt-1">{fmt(accounts[selectedAcct].balance)}</p>
-                <p className="text-xs text-white/50 mt-0.5">{accounts[selectedAcct].number}</p>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: "Available Balance", val: fmt(accounts[selectedAcct].available) },
-                  { label: "Current Balance", val: fmt(accounts[selectedAcct].balance) },
-                  { label: "Account Type", val: accounts[selectedAcct].type },
-                  { label: "Account Number", val: accounts[selectedAcct].number },
-                ].map(({ label, val }) => (
-                  <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                    <span className="text-xs text-gray-400 font-medium">{label}</span>
-                    <span className="text-sm font-bold text-[#1a3a5c]">{val}</span>
+              {current ? (
+                <>
+                  <div className={`rounded-xl bg-gradient-to-br ${current.color} p-4 text-white mb-4`}>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-white/60">{current.type}</p>
+                    <p className="text-xl font-black mt-1">{fmt(current.balance)}</p>
+                    <p className="text-xs text-white/50 mt-0.5">{current.number}</p>
                   </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <button className="bg-[#117ACA] text-white text-sm font-bold py-2.5 rounded-xl hover:bg-[#0a5fa0] transition-colors">ACH</button>
-                <button className="border-2 border-[#117ACA] text-[#117ACA] text-sm font-bold py-2.5 rounded-xl hover:bg-blue-50 transition-colors">Transfer</button>
-              </div>
+                  <div className="space-y-3">
+                    {[
+                      { label: "Available Balance", val: fmt(current.available) },
+                      { label: "Current Balance", val: fmt(current.balance) },
+                      { label: "Account Type", val: current.type },
+                      { label: "Account Number", val: current.number },
+                    ].map(({ label, val }) => (
+                      <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                        <span className="text-xs text-gray-400 font-medium">{label}</span>
+                        <span className="text-sm font-bold text-[#1a3a5c]">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <Link to="/ach" className="bg-[#117ACA] text-white text-center text-sm font-bold py-2.5 rounded-xl hover:bg-[#0a5fa0] transition-colors">ACH</Link>
+                    <Link to="/transfer" className="border-2 border-[#117ACA] text-[#117ACA] text-center text-sm font-bold py-2.5 rounded-xl hover:bg-blue-50 transition-colors">Transfer</Link>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-400">No accounts yet.</p>
+              )}
             </div>
 
             {/* Spending Summary */}

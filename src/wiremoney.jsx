@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircle2, Globe2, Landmark, Send, ShieldCheck, Zap } from "lucide-react";
 import logo from "./assets/onenevada.svg";
-
-const user = { name: "Marcus Johnson", initials: "MJ" };
+import { supabase } from "./supabaseClient";
+import { usePageUser, fetchMyAccounts } from "./pageHelpers";
 
 const navItems = [
   { label: "Account", path: "/dashboard" },
@@ -12,11 +12,6 @@ const navItems = [
   { label: "Transaction", path: "/transaction" },
   { label: "Card", path: "/card" },
   { label: "Report Issue", path: "/report" },
-];
-
-const accounts = [
-  { id: "checking", name: "One Checking Rewards", mask: "4821", balance: 8452.37 },
-  { id: "savings", name: "Primary Savings", mask: "9204", balance: 24310.0 },
 ];
 
 const wireTypes = [
@@ -28,6 +23,7 @@ const formatCurrency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value || 0));
 
 function Header() {
+  const { user, logout } = usePageUser();
   return (
     <header className="w-full bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="px-6 h-20 flex items-center justify-between">
@@ -45,7 +41,7 @@ function Header() {
           <Link to="/settings" className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold">
             Settings
           </Link>
-          <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">Logout</button>
+          <button onClick={logout} className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">Logout</button>
           <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-full px-3 py-2 bg-white">
             <div className="w-8 h-8 rounded-full bg-[#117ACA] text-white flex items-center justify-center text-xs font-black">{user.initials}</div>
             <div className="text-left leading-tight">
@@ -65,9 +61,12 @@ function FieldLabel({ children }) {
 
 export default function WireMoneyPage() {
   const [step, setStep] = useState("form");
+  const [accounts, setAccounts] = useState([]);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     wireType: "domestic",
-    from: "checking",
+    from: "",
     beneficiary: "Maria Amorim",
     bankName: "Wells Fargo",
     routingNumber: "121000248",
@@ -86,7 +85,15 @@ export default function WireMoneyPage() {
     disclaimerAccepted: false,
   });
 
-  const account = accounts.find((item) => item.id === form.from) || accounts[0];
+  useEffect(() => {
+    (async () => {
+      const accs = await fetchMyAccounts();
+      setAccounts(accs);
+      if (accs[0]) setForm((f) => ({ ...f, from: accs[0].id }));
+    })();
+  }, []);
+
+  const account = accounts.find((item) => item.id === form.from) || accounts[0] || { name: "", mask: "", balance: 0 };
   const wireType = wireTypes.find((item) => item.id === form.wireType) || wireTypes[0];
   const amount = Number(form.amount || 0);
   const fee = form.wireType === "international" ? 45 : 25;
@@ -132,6 +139,27 @@ export default function WireMoneyPage() {
   const reviewWire = () => {
     setForm((current) => ({ ...current, disclaimerAccepted: false }));
     setStep("review");
+  };
+
+  const handleSubmitWire = async () => {
+    setSubmitError("");
+    setSubmitting(true);
+    const { error } = await supabase.rpc("make_transfer", {
+      p_from: form.from,
+      p_amount: amount + fee,
+      p_kind: "wire",
+      p_to_account: null,
+      p_recipient_name: form.beneficiary,
+      p_recipient_bank: form.bankName,
+      p_recipient_acct: form.accountNumber,
+      p_memo: form.purpose || form.memo || null,
+    });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError(error.message || "Wire failed.");
+      return;
+    }
+    setStep("success");
   };
 
   const selectWireType = (wireTypeId) => {
@@ -213,11 +241,14 @@ export default function WireMoneyPage() {
                     <span>Yes, I confirm the wire information is accurate and complete.</span>
                   </label>
                 </div>
+                {submitError && (
+                  <div className="mt-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-700">⚠ {submitError}</div>
+                )}
                 <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button onClick={() => setStep("form")} className="rounded-full border border-[#041a49] px-6 py-3 text-sm font-bold text-[#041a49] transition hover:bg-slate-50">Edit Wire</button>
-                  <button disabled={!form.disclaimerAccepted} onClick={() => setStep("success")} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#041a49] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#0c2b70] disabled:cursor-not-allowed disabled:bg-slate-300">
+                  <button disabled={!form.disclaimerAccepted || submitting} onClick={handleSubmitWire} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#041a49] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#0c2b70] disabled:cursor-not-allowed disabled:bg-slate-300">
                     <Send className="h-4 w-4" />
-                    Submit Wire
+                    {submitting ? "Submitting…" : "Submit Wire"}
                   </button>
                 </div>
               </>

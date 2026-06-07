@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "./supabaseClient";
 import {
   Camera,
   CheckCircle2,
@@ -11,8 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import logo from "./assets/onenevada.svg";
-
-const user = { name: "Marcus Johnson", initials: "MJ" };
+import { usePageUser } from "./pageHelpers";
 
 const navItems = [
   { label: "Account", path: "/dashboard" },
@@ -20,11 +20,6 @@ const navItems = [
   { label: "Transaction", path: "/transaction" },
   { label: "Card", path: "/card" },
   { label: "Report Issue", path: "/report" },
-];
-
-const accounts = [
-  { id: "checking", name: "One Checking Rewards", mask: "4821", balance: 8452.37 },
-  { id: "savings", name: "Primary Savings", mask: "9204", balance: 24310.0 },
 ];
 
 const recentDeposits = [
@@ -37,6 +32,7 @@ const formatCurrency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value || 0));
 
 function Header() {
+  const { user, logout } = usePageUser();
   return (
     <header className="w-full bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="px-6 h-20 flex items-center justify-between">
@@ -60,7 +56,7 @@ function Header() {
           <Link to="/settings" className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold">
             Settings
           </Link>
-          <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
+          <button onClick={logout} className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
             Logout
           </button>
           <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-full px-3 py-2 bg-white">
@@ -101,19 +97,51 @@ export default function DepositPage() {
   const [backFile, setBackFile] = useState("");
   const [idFrontFile, setIdFrontFile] = useState("");
   const [idBackFile, setIdBackFile] = useState("");
+  const [accounts, setAccounts] = useState([]);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    account: "checking",
-    depositorName: "Marcus Johnson",
+    account: "",
+    depositorName: "",
     routingNumber: "322484401",
-    accountNumber: "4821",
-    amount: "1250",
-    checkNumber: "1048",
-    payer: "ACME Payroll Services",
+    accountNumber: "",
+    amount: "",
+    checkNumber: "",
+    payer: "",
     memo: "Mobile deposit",
   });
 
-  const account = accounts.find((item) => item.id === form.account) || accounts[0];
+  useEffect(() => {
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const { data } = await supabase.from("accounts").select("*").eq("user_id", auth.user.id).order("created_at");
+      const mapped = (data || []).map((a) => ({
+        id: a.id, name: a.type, mask: (a.account_number || "").replace(/\D/g, "").slice(-4), balance: Number(a.balance),
+      }));
+      setAccounts(mapped);
+      if (mapped[0]) setForm((f) => ({ ...f, account: mapped[0].id, accountNumber: mapped[0].mask }));
+    })();
+  }, []);
+
+  const account = accounts.find((item) => item.id === form.account) || accounts[0] || { name: "", mask: "", balance: 0 };
   const amount = Number(form.amount || 0);
+
+  const handleSubmitDeposit = async () => {
+    setSubmitError("");
+    setSubmitting(true);
+    const { error } = await supabase.rpc("make_deposit", {
+      p_account: form.account,
+      p_amount: amount,
+      p_source: form.payer || "Mobile Deposit",
+    });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError(error.message || "Deposit failed.");
+      return;
+    }
+    setStep("success");
+  };
   const canSubmit =
     amount > 0 &&
     form.depositorName &&
@@ -220,13 +248,17 @@ export default function DepositPage() {
                   <p>Keep the original check until the deposit has been accepted and posted to your account.</p>
                 </div>
 
+                {submitError && (
+                  <div className="mt-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-700">⚠ {submitError}</div>
+                )}
+
                 <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button onClick={() => setStep("form")} className="rounded-full border border-[#041a49] px-6 py-3 text-sm font-bold text-[#041a49] transition hover:bg-slate-50">
                     Edit Deposit
                   </button>
-                  <button onClick={() => setStep("success")} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#041a49] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#0c2b70]">
+                  <button onClick={handleSubmitDeposit} disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#041a49] px-7 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#0c2b70] disabled:bg-slate-300">
                     <Upload className="h-4 w-4" />
-                    Submit Deposit
+                    {submitting ? "Submitting…" : "Submit Deposit"}
                   </button>
                 </div>
               </>

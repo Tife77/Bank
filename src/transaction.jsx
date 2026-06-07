@@ -1,10 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "./assets/onenevada.svg";
+import { supabase } from "./supabaseClient";
+import { usePageUser } from "./pageHelpers";
 
-const user = {
-  name: "Marcus Johnson",
-  initials: "MJ",
-};
+const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(n || 0));
 
 const navItems = [
   { label: "Account", path: "/dashboard" },
@@ -19,45 +19,6 @@ const summaryCards = [
   { label: "Available Balance", value: "$64,850.00", note: "Total across active accounts" },
   { label: "Deposits", value: "$42,000.00", note: "Posted this month" },
   { label: "Withdrawals", value: "$16,400.00", note: "Debits this month" },
-];
-
-const transactions = [
-  {
-    amount: "$2,000.00",
-    sender: "Aron Burleson",
-    receiver: "Maria Amiron",
-    type: "Debit",
-    status: "Pending",
-    date: "May 9, 2026",
-    reference: "TRX-10092",
-  },
-  {
-    amount: "$2,000.00",
-    sender: "Aron Burleson",
-    receiver: "Sharon Stones",
-    type: "Debit",
-    status: "Successful",
-    date: "Feb 5, 2026",
-    reference: "TRX-09844",
-  },
-  {
-    amount: "$8,600.00",
-    sender: "Aron Burleson",
-    receiver: "Maria Amorim",
-    type: "Debit",
-    status: "Successful",
-    date: "Apr 30, 2026",
-    reference: "TRX-10017",
-  },
-  {
-    amount: "$4,500.00",
-    sender: "Direct Deposit",
-    receiver: "Aron Burleson",
-    type: "Credit",
-    status: "Successful",
-    date: "May 2, 2026",
-    reference: "TRX-10103",
-  },
 ];
 
 function StatusBadge({ status }) {
@@ -75,6 +36,37 @@ function StatusBadge({ status }) {
 }
 
 export default function TransactionsPage() {
+  const { user, logout } = usePageUser();
+  const [transactions, setTransactions] = useState([]);
+  const [profileName, setProfileName] = useState("You");
+
+  useEffect(() => {
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const [{ data: profile }, { data: txns }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", auth.user.id).single(),
+        supabase.from("transactions").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }),
+      ]);
+      const name = profile?.full_name || "You";
+      setProfileName(name);
+      setTransactions(
+        (txns || []).map((t) => {
+          const credit = Number(t.amount) >= 0;
+          return {
+            reference: "TRX-" + t.id.slice(0, 8).toUpperCase(),
+            amount: fmt(t.amount),
+            sender: credit ? t.merchant : name,
+            receiver: credit ? name : t.merchant,
+            type: credit ? "Credit" : "Debit",
+            status: "Successful",
+            date: new Date(t.created_at).toLocaleDateString(),
+          };
+        })
+      );
+    })();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#D6EAF8] font-sans">
       <header className="w-full bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
@@ -103,7 +95,7 @@ export default function TransactionsPage() {
             <Link to="/settings" className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold">
               Settings
             </Link>
-            <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
+            <button onClick={logout} className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
               Logout
             </button>
             <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-full px-3 py-2 bg-white">
@@ -186,6 +178,9 @@ export default function TransactionsPage() {
               </thead>
 
               <tbody className="divide-y divide-slate-100 bg-white">
+                {transactions.length === 0 && (
+                  <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-slate-400">No transactions yet.</td></tr>
+                )}
                 {transactions.map((transaction) => (
                   <tr key={transaction.reference} className="transition hover:bg-blue-50/50">
                     <td className="px-5 py-4 text-sm font-bold text-[#041a49]">{transaction.reference}</td>

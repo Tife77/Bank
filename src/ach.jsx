@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "./supabaseClient";
+import { usePageUser, fetchMyAccounts } from "./pageHelpers";
 import {
   CalendarDays,
   CheckCircle2,
@@ -14,19 +16,12 @@ import {
 } from "lucide-react";
 import logo from "./assets/onenevada.svg";
 
-const user = { name: "Marcus Johnson", initials: "MJ" };
-
 const navItems = [
   { label: "Account", path: "/dashboard" },
   { label: "Transfer", path: "/transfer" },
   { label: "Transaction", path: "/transaction" },
   { label: "Card", path: "/card" },
   { label: "Report Issue", path: "/report" },
-];
-
-const accounts = [
-  { id: "checking", name: "One Checking Rewards", holder: "Marcus Johnson", bank: "One Nevada Credit Union", mask: "4821", routing: "322484401", balance: 8452.37 },
-  { id: "savings", name: "Primary Savings", holder: "Marcus Johnson", bank: "One Nevada Credit Union", mask: "9204", routing: "322484401", balance: 24310.0 },
 ];
 
 const recipients = [
@@ -52,6 +47,7 @@ const formatCurrency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value || 0));
 
 function Header() {
+  const { user, logout } = usePageUser();
   return (
     <header className="w-full bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="px-6 h-20 flex items-center justify-between">
@@ -71,7 +67,7 @@ function Header() {
           <Link to="/settings" className="border border-[#041a49] text-[#041a49] hover:bg-[#041a49] hover:text-white transition-colors px-4 py-2 rounded-xl text-sm font-semibold">
             Settings
           </Link>
-          <button className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
+          <button onClick={logout} className="bg-red-500 hover:bg-red-600 transition-colors px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-md">
             Logout
           </button>
           <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-full px-3 py-2 bg-white">
@@ -121,8 +117,11 @@ export default function AchPage() {
   const [step, setStep] = useState("form");
   const [activeTab, setActiveTab] = useState("send");
   const [selectedRecipient, setSelectedRecipient] = useState("john");
+  const [accounts, setAccounts] = useState([]);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    account: "checking",
+    account: "",
     recipientName: "John Doe",
     recipientType: "Individual (PPD)",
     bankName: "Wells Fargo",
@@ -140,8 +139,44 @@ export default function AchPage() {
     authorized: false,
   });
 
-  const originator = accounts.find((item) => item.id === form.account) || accounts[0];
+  useEffect(() => {
+    (async () => {
+      const accs = await fetchMyAccounts();
+      const { data: auth } = await supabase.auth.getUser();
+      let holder = "";
+      if (auth.user) {
+        const { data: p } = await supabase.from("profiles").select("full_name").eq("id", auth.user.id).single();
+        holder = p?.full_name || "";
+      }
+      const withHolder = accs.map((a) => ({ ...a, holder }));
+      setAccounts(withHolder);
+      if (withHolder[0]) setForm((f) => ({ ...f, account: withHolder[0].id }));
+    })();
+  }, []);
+
+  const originator = accounts.find((item) => item.id === form.account) || accounts[0] || { name: "", mask: "", routing: "322484401", bank: "One Nevada Credit Union", holder: "" };
   const amount = Number(form.amount || 0);
+
+  const handleSubmitAch = async () => {
+    setSubmitError("");
+    setSubmitting(true);
+    const { error } = await supabase.rpc("make_transfer", {
+      p_from: form.account,
+      p_amount: amount,
+      p_kind: "ach",
+      p_to_account: null,
+      p_recipient_name: form.recipientName,
+      p_recipient_bank: form.bankName,
+      p_recipient_acct: form.accountNumber,
+      p_memo: form.memo || form.addenda || null,
+    });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError(error.message || "ACH failed.");
+      return;
+    }
+    setStep("success");
+  };
   const estimatedDelivery = "June 6, 2026";
   const transactionId = "ACH-60412";
   const canReview =
@@ -358,13 +393,16 @@ export default function AchPage() {
                     ACH transactions may remain pending while processing. Verify the recipient routing and account number before submitting.
                   </p>
 
+                  {submitError && (
+                    <div className="mt-4 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-700">⚠ {submitError}</div>
+                  )}
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     <button onClick={() => setStep("form")} className="rounded bg-slate-100 py-3 text-sm font-black text-[#041a49] transition hover:bg-slate-200">
                       Edit ACH
                     </button>
-                    <button onClick={() => setStep("success")} className="inline-flex items-center justify-center gap-2 rounded bg-[#0b48ff] py-3 text-sm font-black text-white transition hover:bg-[#0637bd]">
+                    <button onClick={handleSubmitAch} disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded bg-[#0b48ff] py-3 text-sm font-black text-white transition hover:bg-[#0637bd] disabled:bg-slate-300">
                       <Send className="h-4 w-4" />
-                      Confirm & Submit
+                      {submitting ? "Submitting…" : "Confirm & Submit"}
                     </button>
                   </div>
                 </>

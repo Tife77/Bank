@@ -1,20 +1,38 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "./assets/onenevada.svg";
+import { supabase } from "./supabaseClient";
 
 export default function SignInPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setError("Please enter your username and password.");
+      setError("Please enter your email and password.");
       return;
     }
     setError("");
-    window.location.href = "/dashboard";
+    setSubmitting(true);
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: username.trim(),
+      password,
+    });
+    setSubmitting(false);
+    if (signInError) {
+      setError(signInError.message || "Unable to sign in.");
+      return;
+    }
+    // Record last login (best-effort)
+    if (data.user) {
+      supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", data.user.id);
+    }
+    navigate("/dashboard");
   };
 
   return (
@@ -73,13 +91,13 @@ export default function SignInPage() {
             {/* Username */}
             <div style={{ marginBottom: 18 }}>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#2c4a6e", marginBottom: 6 }}>
-                Username or Email
+                Email
               </label>
               <input
-                type="text"
+                type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username or email"
+                placeholder="Enter your email"
                 autoComplete="username"
                 style={{
                   width: "100%", padding: "11px 14px", border: "1.5px solid #c5d9ec",
@@ -131,15 +149,16 @@ export default function SignInPage() {
             {/* Sign In button */}
             <button
               type="submit"
+              disabled={submitting}
               style={{
-                width: "100%", padding: "13px", backgroundColor: "#005EB8", color: "white",
+                width: "100%", padding: "13px", backgroundColor: submitting ? "#7fa8d0" : "#005EB8", color: "white",
                 fontSize: 15, fontWeight: 700, border: "none", borderRadius: 8,
-                cursor: "pointer", letterSpacing: 0.3,
+                cursor: submitting ? "not-allowed" : "pointer", letterSpacing: 0.3,
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = "#004a96"}
-              onMouseLeave={(e) => e.target.style.backgroundColor = "#005EB8"}
+              onMouseEnter={(e) => { if (!submitting) e.target.style.backgroundColor = "#004a96"; }}
+              onMouseLeave={(e) => { if (!submitting) e.target.style.backgroundColor = "#005EB8"; }}
             >
-              Sign In
+              {submitting ? "Signing in…" : "Sign In"}
             </button>
 
           </form>

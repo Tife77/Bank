@@ -26,6 +26,7 @@ import AchPage from "./ach.jsx";
 import DepositPage from "./deposit.jsx";
 import StatementsPage from "./statements.jsx";
 import WireMoneyPage from "./wiremoney.jsx";
+import { ProtectedRoute } from "./AuthContext.jsx";
 
 
 
@@ -711,18 +712,18 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-white text-slate-100">
         <Routes>
-          <Route path="/cheque" element={<ChequePage />} />
-          <Route path="/card" element={<CardPage />} />
-          <Route path="/dashboard" element={<ChaseDashboard />} />
-          <Route path="/ach" element={<AchPage />} />
-          <Route path="/pay-bills" element={<AchPage />} />
-          <Route path="/deposit" element={<DepositPage />} />
-          <Route path="/statements" element={<StatementsPage />} />
-          <Route path="/wire-money" element={<WireMoneyPage />} />
-          <Route path="/transfer" element={<TransferPage />} />
-          <Route path="/transaction" element={<TransactionsPage />} />
-          <Route path="/report" element={<ReportPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/cheque" element={<ProtectedRoute><ChequePage /></ProtectedRoute>} />
+          <Route path="/card" element={<ProtectedRoute><CardPage /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><ChaseDashboard /></ProtectedRoute>} />
+          <Route path="/ach" element={<ProtectedRoute><AchPage /></ProtectedRoute>} />
+          <Route path="/pay-bills" element={<ProtectedRoute><AchPage /></ProtectedRoute>} />
+          <Route path="/deposit" element={<ProtectedRoute><DepositPage /></ProtectedRoute>} />
+          <Route path="/statements" element={<ProtectedRoute><StatementsPage /></ProtectedRoute>} />
+          <Route path="/wire-money" element={<ProtectedRoute><WireMoneyPage /></ProtectedRoute>} />
+          <Route path="/transfer" element={<ProtectedRoute><TransferPage /></ProtectedRoute>} />
+          <Route path="/transaction" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
+          <Route path="/report" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/" element={<HomePage />} />
