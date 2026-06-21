@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import "./App.css";
 import banner1 from "./assets/banner-1.jpg";
 import banner2 from "./assets/banner-2.jpg";
@@ -708,9 +708,46 @@ function CardPage() {
   );
 }
 
+// ── Per-page document title + meta description ─────────────────
+const PAGE_META = {
+  "/": { title: "One Nevada Credit Union | Personal Banking, Loans & Insurance", desc: "One Nevada Credit Union — secure online banking, loans, and insurance for Nevadans." },
+  "/signin": { title: "Sign In | One Nevada Credit Union", desc: "Sign in to your One Nevada Credit Union online banking account." },
+  "/signup": { title: "Open an Account | One Nevada Credit Union", desc: "Open a checking account with One Nevada Credit Union in minutes." },
+  "/dashboard": { title: "Account Overview | One Nevada Credit Union", desc: "View your balances, accounts, and recent activity." },
+  "/transfer": { title: "Transfer Money | One Nevada Credit Union", desc: "Move money between your accounts or send to external banks." },
+  "/ach": { title: "ACH Payments | One Nevada Credit Union", desc: "Send and collect ACH payments." },
+  "/pay-bills": { title: "Pay Bills | One Nevada Credit Union", desc: "Pay bills with ACH." },
+  "/deposit": { title: "Deposit a Cheque | One Nevada Credit Union", desc: "Deposit a cheque using mobile deposit." },
+  "/wire-money": { title: "Wire Transfer | One Nevada Credit Union", desc: "Send domestic and international wire transfers." },
+  "/cheque": { title: "Cash a Cheque | One Nevada Credit Union", desc: "Cash out a cheque to your account." },
+  "/transaction": { title: "Transactions | One Nevada Credit Union", desc: "Review your transaction history and status." },
+  "/statements": { title: "Statements | One Nevada Credit Union", desc: "View and download your account statements." },
+  "/card": { title: "Apply for a Card | One Nevada Credit Union", desc: "Apply for a One Nevada credit or debit card." },
+  "/report": { title: "Report an Issue | One Nevada Credit Union", desc: "Report a problem with your account or a transaction." },
+  "/settings": { title: "Settings | One Nevada Credit Union", desc: "Manage your profile, security, and notification preferences." },
+  "/admin": { title: "Admin Console | One Nevada Credit Union", desc: "Administrative dashboard." },
+};
+
+function TitleManager() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const meta = PAGE_META[pathname] || { title: "One Nevada Credit Union", desc: "Secure online banking with One Nevada Credit Union." };
+    document.title = meta.title;
+    let tag = document.querySelector('meta[name="description"]');
+    if (!tag) {
+      tag = document.createElement("meta");
+      tag.setAttribute("name", "description");
+      document.head.appendChild(tag);
+    }
+    tag.setAttribute("content", meta.desc);
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <TitleManager />
       <div className="min-h-screen bg-white text-slate-100">
         <Routes>
           <Route path="/cheque" element={<ProtectedRoute><ChequePage /></ProtectedRoute>} />
