@@ -1,11 +1,23 @@
 // POST /functions/v1/send-welcome
-// Sends a welcome email to the signed-in user via Resend.
-// Body: { name?: string }  (email is taken from the verified JWT — can't be spoofed)
+// Sends a welcome email to the signed-in user via YOUR SMTP server (no Resend).
+// Body: { name?: string }  (recipient email comes from the verified JWT — can't be spoofed)
+//
+// Secrets required (supabase secrets set ...):
+//   SMTP_HOST   e.g. mail.onenevada.com
+//   SMTP_PORT   465 (implicit TLS) or 587 (STARTTLS)
+//   SMTP_USER   no-reply@onenevada.com
+//   SMTP_PASS   <mailbox password>
+//   SMTP_TLS    "true" for port 465, "false" for 587   (optional, default true)
+//   WELCOME_FROM  optional display, default uses SMTP_USER
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { corsHeaders, json, getUser } from "../_shared/unit.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-// Use a verified sender once you have a domain in Resend; onboarding@resend.dev works for testing.
-const FROM = Deno.env.get("WELCOME_FROM") ?? "One Nevada Credit Union <onboarding@resend.dev>";
+const HOST = Deno.env.get("SMTP_HOST") ?? "";
+const PORT = Number(Deno.env.get("SMTP_PORT") ?? "465");
+const USER = Deno.env.get("SMTP_USER") ?? "";
+const PASS = Deno.env.get("SMTP_PASS") ?? "";
+const TLS = (Deno.env.get("SMTP_TLS") ?? "true") === "true";
+const FROM = Deno.env.get("WELCOME_FROM") || `One Nevada Credit Union <${USER}>`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -14,7 +26,7 @@ Deno.serve(async (req) => {
   try {
     const user = await getUser(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!RESEND_API_KEY) return json({ error: "Email not configured (set RESEND_API_KEY)" }, 500);
+    if (!HOST || !USER || !PASS) return json({ error: "SMTP not configured (set SMTP_HOST/USER/PASS)" }, 500);
 
     const { name } = await req.json().catch(() => ({}));
     const firstName = (name || user.email?.split("@")[0] || "there").split(" ")[0];
@@ -25,7 +37,7 @@ Deno.serve(async (req) => {
           <h1 style="color:#fff;margin:0;font-size:20px">One Nevada Credit Union</h1>
         </div>
         <div style="padding:28px;color:#1a2e45">
-          <h2 style="color:#003865;margin:0 0 12px">Welcome, ${firstName}! 🎉</h2>
+          <h2 style="color:#003865;margin:0 0 12px">Welcome, ${firstName}!</h2>
           <p style="line-height:1.6;font-size:15px">
             Your account has been created successfully. You can now sign in to view your
             balances, move money, deposit cheques, and manage your cards.
@@ -40,19 +52,24 @@ Deno.serve(async (req) => {
         </div>
       </div>`;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: FROM,
-        to: [user.email],
-        subject: "Welcome to One Nevada Credit Union",
-        html,
-      }),
+    const client = new SMTPClient({
+      connection: {
+        hostname: HOST,
+        port: PORT,
+        tls: TLS,
+        auth: { username: USER, password: PASS },
+      },
     });
-    const data = await res.json();
-    if (!res.ok) return json({ error: data?.message || "Email send failed", detail: data }, 502);
-    return json({ ok: true, id: data.id });
+
+    await client.send({
+      from: FROM,
+      to: user.email,
+      subject: "Welcome to One Nevada Credit Union",
+      html,
+    });
+    await client.close();
+
+    return json({ ok: true, to: user.email });
   } catch (err) {
     return json({ error: String(err?.message ?? err) }, 500);
   }
