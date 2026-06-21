@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import "./App.css";
 import banner1 from "./assets/banner-1.jpg";
@@ -17,6 +17,7 @@ import CardForm from "./card.jsx";
 import ChaseDashboard from "./dashboard.jsx";
 import SignupPage from "./signup.jsx";
 import SignInPage from "./signin.jsx";
+import ForgotPasswordPage from "./forgotpassword.jsx";
 import logo from "./assets/onenevada.svg";
 import ReportPage from "./report.jsx";
 import TransactionsPage from "./transaction.jsx";
@@ -712,6 +713,7 @@ function CardPage() {
 const PAGE_META = {
   "/": { title: "One Nevada Credit Union | Personal Banking, Loans & Insurance", desc: "One Nevada Credit Union — secure online banking, loans, and insurance for Nevadans." },
   "/signin": { title: "Sign In | One Nevada Credit Union", desc: "Sign in to your One Nevada Credit Union online banking account." },
+  "/forgot-password": { title: "Forgot Password | One Nevada Credit Union", desc: "Request password reset instructions for your One Nevada Credit Union online banking account." },
   "/signup": { title: "Open an Account | One Nevada Credit Union", desc: "Open a checking account with One Nevada Credit Union in minutes." },
   "/dashboard": { title: "Account Overview | One Nevada Credit Union", desc: "View your balances, accounts, and recent activity." },
   "/transfer": { title: "Transfer Money | One Nevada Credit Union", desc: "Move money between your accounts or send to external banks." },
@@ -765,9 +767,9 @@ function App() {
           <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<SignInPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/" element={<HomePage />} />
         </Routes>
-        <ChatWidget />
       </div>
     </BrowserRouter>
   );
@@ -776,76 +778,4 @@ function App() {
 export default App;
 
 // ── Chat Widget ────────────────────────────────────────────────
-function ChatWidget() {
-  const [open, setOpen] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [position, setPosition] = useState({ left: window.innerWidth - 88, top: window.innerHeight - 180 });
-  const dragStartRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
-  const clickBlockedRef = useRef(false);
 
-  useEffect(() => {
-    function onPointerMove(e) {
-      if (!dragging) return;
-      const { x, y, left, top } = dragStartRef.current;
-      const dx = e.clientX - x;
-      const dy = e.clientY - y;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) clickBlockedRef.current = true;
-      let nextLeft = Math.max(16, Math.min(window.innerWidth - 88, left + dx));
-      let nextTop = Math.max(16, Math.min(window.innerHeight - 88, top + dy));
-      setPosition({ left: nextLeft, top: nextTop });
-    }
-    function onPointerUp() { setDragging(false); }
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-    return () => { window.removeEventListener("pointermove", onPointerMove); window.removeEventListener("pointerup", onPointerUp); };
-  }, [dragging]);
-
-  function onPointerDown(e) {
-    setDragging(true);
-    clickBlockedRef.current = false;
-    dragStartRef.current = { x: e.clientX, y: e.clientY, left: position.left, top: position.top };
-  }
-
-  function onClick() { if (clickBlockedRef.current) return; setOpen((v) => !v); }
-
-  const panelLeft = position.left < window.innerWidth / 2 ? position.left + 70 : position.left - 338;
-
-  return (
-    <>
-      {open && (
-        <div className="fixed z-60" style={{ left: panelLeft, top: position.top, minWidth: 320 }}>
-          <div className="max-w-xs rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
-            <div className="flex items-center justify-between px-4 py-3 rounded-t-3xl bg-red-600 text-white">
-              <span className="font-semibold">Support Chat</span>
-              <button onClick={() => setOpen(false)} className="text-xl leading-none">×</button>
-            </div>
-            <div className="h-72 overflow-auto p-4 text-sm text-slate-700">
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-slate-100 px-3 py-2 text-slate-700">Hi! How can I help you today?</div>
-              </div>
-            </div>
-            <div className="border-t border-slate-200 p-4">
-              <div className="flex gap-2">
-                <input className="flex-1 rounded-2xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-red-600" placeholder="Type your message..." />
-                <button className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Send</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <button
-        type="button"
-        onPointerDown={onPointerDown}
-        onClick={onClick}
-        className="fixed z-70 flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-white shadow-2xl ring-1 ring-white/20"
-        style={{ left: position.left, top: position.top }}
-        aria-label="Open support chat"
-      >
-        <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor">
-          <path d="M21 11.5c0 3.59-2.91 6.5-6.5 6.5H9l-4 4V18.5C5 14.91 7.91 12 11.5 12h3c3.59 0 6.5 2.91 6.5 6.5z" stroke="white" strokeWidth="1.8" />
-          <path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
-    </>
-  );
-}
