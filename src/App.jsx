@@ -18,6 +18,7 @@ import ChaseDashboard from "./dashboard.jsx";
 import SignupPage from "./signup.jsx";
 import SignInPage from "./signin.jsx";
 import ForgotPasswordPage from "./forgotpassword.jsx";
+import ResetPasswordPage from "./resetpassword.jsx";
 import logo from "./assets/onenevada.svg";
 import ReportPage from "./report.jsx";
 import TransactionsPage from "./transaction.jsx";
@@ -714,6 +715,7 @@ const PAGE_META = {
   "/": { title: "One Nevada Credit Union | Personal Banking, Loans & Insurance", desc: "One Nevada Credit Union — secure online banking, loans, and insurance for Nevadans." },
   "/signin": { title: "Sign In | One Nevada Credit Union", desc: "Sign in to your One Nevada Credit Union online banking account." },
   "/forgot-password": { title: "Forgot Password | One Nevada Credit Union", desc: "Request password reset instructions for your One Nevada Credit Union online banking account." },
+  "/reset-password": { title: "Reset Password | One Nevada Credit Union", desc: "Choose a new password for your One Nevada Credit Union online banking account." },
   "/signup": { title: "Open an Account | One Nevada Credit Union", desc: "Open a checking account with One Nevada Credit Union in minutes." },
   "/dashboard": { title: "Account Overview | One Nevada Credit Union", desc: "View your balances, accounts, and recent activity." },
   "/transfer": { title: "Transfer Money | One Nevada Credit Union", desc: "Move money between your accounts or send to external banks." },
@@ -768,6 +770,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={<HomePage />} />
         </Routes>
       </div>
