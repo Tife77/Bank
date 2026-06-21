@@ -23,51 +23,6 @@ const navItems = [
   { label: "Admin", path: "/admin" },
 ];
 
-const initialAccounts = [
-  { id: "checking", owner: "Marcus Johnson", type: "Total Checking", number: "****4821", balance: 8452.37, status: "Active" },
-  { id: "savings", owner: "Marcus Johnson", type: "Primary Savings", number: "****9204", balance: 24310.0, status: "Active" },
-  { id: "credit", owner: "Marcus Johnson", type: "Visa Platinum", number: "****3377", balance: -1284.5, status: "Active" },
-];
-
-const initialTransactions = [
-  { id: "TRF-74119", channel: "Transfer", owner: "Marcus Johnson", amount: 2500, status: "Pending", date: "Jun 7, 2026" },
-  { id: "ACH-60412", channel: "ACH", owner: "Marcus Johnson", amount: 1200, status: "Pending", date: "Jun 6, 2026" },
-  { id: "CHK-18440", channel: "Cheque", owner: "Marcus Johnson", amount: 5000, status: "Pending", date: "Jun 6, 2026" },
-  { id: "WIR-60412", channel: "Wire", owner: "Marcus Johnson", amount: 4500, status: "Successful", date: "Jun 5, 2026" },
-];
-
-const initialVerifications = [
-  { id: "VER-1001", item: "Government ID", owner: "Marcus Johnson", status: "Pending", notification: "Queued" },
-  { id: "VER-1002", item: "External account micro-deposit", owner: "Marcus Johnson", status: "Pending", notification: "Queued" },
-  { id: "VER-1003", item: "International wire identity check", owner: "Marcus Johnson", status: "Approved", notification: "Sent" },
-];
-
-const userDetails = {
-  personal: [
-    ["Full name", "Marcus Johnson"],
-    ["Email", "marcus.johnson@example.com"],
-    ["Phone", "+1 (702) 555-0198"],
-    ["Address", "1020 Sierra Ridge Ave, Las Vegas, NV"],
-    ["Date of birth", "Aug 12, 1988"],
-    ["Member since", "May 2026"],
-  ],
-  cards: [
-    ["Cardholder", "Marcus Johnson"],
-    ["Card product", "Visa Platinum"],
-    ["Card number", "**** **** **** 3377"],
-    ["Expiration", "09/29"],
-    ["Status", "Active"],
-    ["Limit", "$18,000.00"],
-  ],
-  cheques: [
-    ["Latest cheque serial", "CHK-884201"],
-    ["Sender name", "Marcus Johnson"],
-    ["Deposited amount", "$5,000.00"],
-    ["Target account", "Total Checking ****4821"],
-    ["Review status", "Pending"],
-    ["Image attachment", "cheque-front-884201.png"],
-  ],
-};
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value || 0));
@@ -275,6 +230,7 @@ export default function AdminPage() {
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [balanceAmount, setBalanceAmount] = useState("500");
   const [notAdmin, setNotAdmin] = useState(false);
+  const [profilesById, setProfilesById] = useState({});
 
   const loadAll = async () => {
     const { data: auth } = await supabase.auth.getUser();
@@ -283,16 +239,18 @@ export default function AdminPage() {
     if (!me?.is_admin) { setNotAdmin(true); return; }
 
     const [{ data: profiles }, { data: accts }, { data: txns }, { data: kyc }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name, email"),
+      supabase.from("profiles").select("*"),
       supabase.from("accounts").select("*").order("created_at"),
       supabase.from("transfers").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("kyc_submissions").select("*").order("created_at", { ascending: false }),
     ]);
     const nameOf = Object.fromEntries((profiles || []).map((p) => [p.id, p.full_name || p.email]));
+    setProfilesById(Object.fromEntries((profiles || []).map((p) => [p.id, p])));
 
     setAccounts((accts || []).map((a) => ({
       id: a.id, owner: nameOf[a.user_id] || "Unknown", type: a.type,
       number: a.account_number, balance: Number(a.balance), status: a.status || "Active",
+      userId: a.user_id, routing: a.routing_number, provider: a.provider,
     })));
     setTransactions((txns || []).map((t) => ({
       id: t.id, channel: (t.kind || "transfer").toUpperCase(), owner: nameOf[t.user_id] || "Unknown",
@@ -309,19 +267,46 @@ export default function AdminPage() {
 
   useEffect(() => { loadAll(); }, []);
   const [mail, setMail] = useState({
-    to: "marcus.johnson@example.com",
+    to: "",
     subject: "One Nevada account update",
     message: "Your request has been reviewed by One Nevada Credit Union.",
   });
   const [mailLog, setMailLog] = useState([]);
   const [extractForm, setExtractForm] = useState({
-    fullName: "Marcus Johnson",
-    email: "marcus.johnson@example.com",
-    memberId: "MEM-4821",
+    fullName: "",
+    email: "",
+    memberId: "",
   });
   const [extractedRecord, setExtractedRecord] = useState(null);
 
   const selectedAccount = accounts.find((account) => account.id === selectedAccountId) || accounts[0] || { id: "", owner: "—", type: "—", number: "—", balance: 0, status: "—" };
+
+  // Live details for the selected account's owner (replaces hardcoded userDetails).
+  const ownerProfile = profilesById[selectedAccount.userId] || {};
+  const userDetails = {
+    personal: [
+      ["Full name", ownerProfile.full_name || selectedAccount.owner || "—"],
+      ["Email", ownerProfile.email || "—"],
+      ["Phone", ownerProfile.phone || "—"],
+      ["Address", [ownerProfile.address, ownerProfile.city, ownerProfile.state, ownerProfile.zip].filter(Boolean).join(", ") || "—"],
+      ["Date of birth", ownerProfile.date_of_birth || "—"],
+      ["KYC status", ownerProfile.kyc_status || "not_started"],
+    ],
+    cards: [
+      ["Cardholder", ownerProfile.full_name || selectedAccount.owner || "—"],
+      ["Account product", selectedAccount.type || "—"],
+      ["Account number", selectedAccount.number || "—"],
+      ["Routing", selectedAccount.routing || "—"],
+      ["Status", selectedAccount.status || "—"],
+      ["Provider", selectedAccount.provider || "simulation"],
+    ],
+    cheques: [
+      ["Owner", ownerProfile.full_name || selectedAccount.owner || "—"],
+      ["Account", `${selectedAccount.type} ${selectedAccount.number}`],
+      ["Balance", formatCurrency(selectedAccount.balance)],
+      ["Member since", ownerProfile.created_at ? new Date(ownerProfile.created_at).toLocaleDateString() : "—"],
+    ],
+  };
   const pendingTransactions = useMemo(() => transactions.filter((item) => item.status === "Pending").length, [transactions]);
 
   const setAccountStatus = async (accountId, status) => {

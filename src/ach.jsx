@@ -24,18 +24,6 @@ const navItems = [
   { label: "Report Issue", path: "/report" },
 ];
 
-const recipients = [
-  { id: "john", name: "John Doe", type: "Individual (PPD)", bank: "Wells Fargo", routing: "021000021", account: "5678", accountType: "Checking", amount: 500 },
-  { id: "abc", name: "ABC LLC", type: "Business (CCD)", bank: "Bank of America", routing: "026009593", account: "4412", accountType: "Checking", amount: 1200 },
-  { id: "summit", name: "Summit Office Supply", type: "Business (CCD)", bank: "Chase", routing: "322271627", account: "4188", accountType: "Savings", amount: 684.25 },
-];
-
-const activityRows = [
-  { date: "05/28", recipient: "John Doe", amount: "$500", type: "Credit", status: "Completed" },
-  { date: "05/27", recipient: "ABC LLC", amount: "$1,200", type: "Debit", status: "Pending" },
-  { date: "05/23", recipient: "Summit Office Supply", amount: "$684.25", type: "Credit", status: "Processing" },
-];
-
 const tabs = [
   { id: "send", label: "Send Money (ACH Credit)" },
   { id: "request", label: "Request / Collect (ACH Debit)" },
@@ -118,24 +106,26 @@ export default function AchPage() {
   const [activeTab, setActiveTab] = useState("send");
   const [selectedRecipient, setSelectedRecipient] = useState("john");
   const [accounts, setAccounts] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [recipientList, setRecipientList] = useState([]);
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     account: "",
-    recipientName: "John Doe",
+    recipientName: "",
     recipientType: "Individual (PPD)",
-    bankName: "Wells Fargo",
-    routingNumber: "021000021",
-    accountNumber: "5678",
+    bankName: "",
+    routingNumber: "",
+    accountNumber: "",
     accountType: "Checking",
-    amount: "2500.00",
+    amount: "",
     paymentType: "One-time",
     recurringSchedule: "Monthly",
-    effectiveDate: "2026-06-03",
-    companyId: "ONCU-4821",
-    addenda: "Consulting Payment",
+    effectiveDate: new Date().toISOString().slice(0, 10),
+    companyId: "",
+    addenda: "",
     transactionType: "ACH Credit",
-    memo: "Consulting Payment",
+    memo: "",
     authorized: false,
   });
 
@@ -151,6 +141,29 @@ export default function AchPage() {
       const withHolder = accs.map((a) => ({ ...a, holder }));
       setAccounts(withHolder);
       if (withHolder[0]) setForm((f) => ({ ...f, account: withHolder[0].id }));
+
+      // Real ACH activity + recipients from transfer history
+      if (auth.user) {
+        const { data: trs } = await supabase.from("transfers")
+          .select("*").eq("user_id", auth.user.id).eq("kind", "ach")
+          .order("created_at", { ascending: false }).limit(20);
+        setActivity((trs || []).map((t) => ({
+          date: new Date(t.created_at).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" }),
+          recipient: t.recipient_name || "Recipient",
+          amount: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(Number(t.amount))),
+          type: "Debit",
+          status: t.status === "completed" || t.status === "Successful" ? "Completed" : "Pending",
+        })));
+        // unique past recipients
+        const seen = new Set(); const recs = [];
+        (trs || []).forEach((t) => {
+          if (t.recipient_name && !seen.has(t.recipient_name)) {
+            seen.add(t.recipient_name);
+            recs.push({ id: t.id, name: t.recipient_name, type: "Individual (PPD)", bank: t.recipient_bank || "Bank", routing: "—", account: t.recipient_acct || "----", accountType: "Checking", amount: Math.abs(Number(t.amount)) });
+          }
+        });
+        setRecipientList(recs);
+      }
     })();
   }, []);
 
@@ -205,7 +218,8 @@ export default function AchPage() {
   };
 
   const selectRecipient = (recipientId) => {
-    const recipient = recipients.find((item) => item.id === recipientId) || recipients[0];
+    const recipient = recipientList.find((item) => item.id === recipientId) || recipientList[0];
+    if (!recipient) return;
     setSelectedRecipient(recipient.id);
     setForm((current) => ({
       ...current,
@@ -308,7 +322,10 @@ export default function AchPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {activityRows.map((row) => (
+                  {activity.length === 0 && (
+                    <tr><td colSpan={5} className="py-8 text-center text-sm text-slate-400">No ACH activity yet.</td></tr>
+                  )}
+                  {activity.map((row) => (
                     <tr key={`${row.date}-${row.recipient}`}>
                       <td className="py-4 font-bold text-[#041a49]">{row.date}</td>
                       <td className="py-4 font-bold text-[#041a49]">{row.recipient}</td>
@@ -331,7 +348,10 @@ export default function AchPage() {
               </div>
             </div>
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {recipients.map((recipient) => (
+              {recipientList.length === 0 && (
+                <p className="text-sm text-slate-400">No saved recipients yet — they appear here after your first ACH transfer.</p>
+              )}
+              {recipientList.map((recipient) => (
                 <button
                   key={recipient.id}
                   type="button"
@@ -559,7 +579,7 @@ export default function AchPage() {
                   <Clock3 className="h-5 w-5 text-[#117ACA]" />
                 </div>
                 <div className="mt-4 divide-y divide-slate-100">
-                  {activityRows.map((row) => (
+                  {activity.map((row) => (
                     <div key={`${row.date}-${row.recipient}`} className="py-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>

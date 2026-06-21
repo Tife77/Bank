@@ -15,11 +15,6 @@ const navItems = [
   { label: "Report Issue", path: "/report" },
 ];
 
-const summaryCards = [
-  { label: "Available Balance", value: "$64,850.00", note: "Total across active accounts" },
-  { label: "Deposits", value: "$42,000.00", note: "Posted this month" },
-  { label: "Withdrawals", value: "$16,400.00", note: "Debits this month" },
-];
 
 function StatusBadge({ status }) {
   const successful = status === "Successful";
@@ -39,17 +34,36 @@ export default function TransactionsPage() {
   const { user, logout } = usePageUser();
   const [transactions, setTransactions] = useState([]);
   const [profileName, setProfileName] = useState("You");
+  const [summaryCards, setSummaryCards] = useState([
+    { label: "Available Balance", value: "$0.00", note: "Total across active accounts" },
+    { label: "Deposits", value: "$0.00", note: "Posted this month" },
+    { label: "Withdrawals", value: "$0.00", note: "Debits this month" },
+  ]);
 
   useEffect(() => {
     (async () => {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return;
-      const [{ data: profile }, { data: txns }] = await Promise.all([
+      const [{ data: profile }, { data: accts }, { data: txns }] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", auth.user.id).single(),
+        supabase.from("accounts").select("available, balance").eq("user_id", auth.user.id),
         supabase.from("transactions").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }),
       ]);
       const name = profile?.full_name || "You";
       setProfileName(name);
+
+      // Dynamic summary cards
+      const available = (accts || []).reduce((s, a) => s + Number(a.available || 0), 0);
+      const now = new Date();
+      const thisMonth = (txns || []).filter((t) => { const d = new Date(t.created_at); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+      const deposits = thisMonth.filter((t) => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
+      const withdrawals = thisMonth.filter((t) => Number(t.amount) < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+      setSummaryCards([
+        { label: "Available Balance", value: fmt(available), note: "Total across active accounts" },
+        { label: "Deposits", value: fmt(deposits), note: "Posted this month" },
+        { label: "Withdrawals", value: fmt(withdrawals), note: "Debits this month" },
+      ]);
+
       setTransactions(
         (txns || []).map((t) => {
           const credit = Number(t.amount) >= 0;

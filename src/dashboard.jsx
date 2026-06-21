@@ -11,13 +11,6 @@ const quickActions = [
   { label: "Wire Money", iconType: "wire", path: "/wire-money" },
 ];
 
-const spendingCategories = [
-  { label: "Groceries", amount: 412, pct: 82, color: "bg-blue-500" },
-  { label: "Dining", amount: 287, pct: 57, color: "bg-indigo-400" },
-  { label: "Shopping", amount: 534, pct: 100, color: "bg-[#117ACA]" },
-  { label: "Transport", amount: 198, pct: 40, color: "bg-sky-400" },
-];
-
 // ── SVG Icon Helper Component ──────────────────────────────────
 function Icon({ type, className = "w-6 h-6" }) {
   const vectors = {
@@ -107,6 +100,9 @@ export default function ChaseDashboard() {
   const [user, setUser] = useState({ name: "", initials: "", lastLogin: "" });
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [spending, setSpending] = useState([]);
+  const [monthlyChange, setMonthlyChange] = useState(0);
+  const [creditScore, setCreditScore] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -118,7 +114,7 @@ export default function ChaseDashboard() {
       const [{ data: profile }, { data: accts }, { data: txns }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", auth.user.id).single(),
         supabase.from("accounts").select("*").eq("user_id", auth.user.id).order("created_at"),
-        supabase.from("transactions").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(15),
+        supabase.from("transactions").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(100),
       ]);
 
       if (profile) {
@@ -127,6 +123,7 @@ export default function ChaseDashboard() {
           initials: profile.initials || "U",
           lastLogin: profile.last_login ? new Date(profile.last_login).toLocaleString() : "First login",
         });
+        setCreditScore(profile.credit_score ?? null);
       }
       setAccounts(
         (accts || []).map((a) => ({
@@ -135,13 +132,28 @@ export default function ChaseDashboard() {
           color: a.color, credit: a.is_credit,
         }))
       );
-      setTransactions(
-        (txns || []).map((t) => ({
-          id: t.id, merchant: t.merchant, category: t.category,
-          date: new Date(t.created_at).toLocaleDateString(),
-          amount: Number(t.amount), iconType: t.icon_type || "box",
-        }))
-      );
+      const mapped = (txns || []).map((t) => ({
+        id: t.id, merchant: t.merchant, category: t.category,
+        date: new Date(t.created_at).toLocaleDateString(),
+        amount: Number(t.amount), iconType: t.icon_type || "box",
+        ts: new Date(t.created_at),
+      }));
+      setTransactions(mapped);
+
+      // ── Compute dynamic spending + monthly income from this month's activity ──
+      const now = new Date();
+      const thisMonth = mapped.filter((t) => t.ts.getMonth() === now.getMonth() && t.ts.getFullYear() === now.getFullYear());
+      setMonthlyChange(thisMonth.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0));
+      const byCat = {};
+      thisMonth.filter((t) => t.amount < 0).forEach((t) => {
+        const c = t.category || "Other";
+        byCat[c] = (byCat[c] || 0) + Math.abs(t.amount);
+      });
+      const palette = ["bg-blue-500", "bg-indigo-400", "bg-[#117ACA]", "bg-sky-400", "bg-cyan-500"];
+      const top = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 4);
+      const max = top.length ? top[0][1] : 1;
+      setSpending(top.map(([label, amount], i) => ({ label, amount, pct: Math.round((amount / max) * 100), color: palette[i % palette.length] })));
+
       setLoading(false);
     })();
   }, []);
@@ -236,7 +248,7 @@ export default function ChaseDashboard() {
           <div className="bg-white rounded-2xl shadow-sm px-6 py-4 text-right border border-blue-100">
             <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">Total Assets</p>
             <p className="text-3xl font-black text-[#117ACA] tracking-tight">{fmt(totalBalance)}</p>
-            <p className="text-xs text-emerald-500 font-semibold mt-0.5">↑ $3,250 this month</p>
+            <p className="text-xs text-emerald-500 font-semibold mt-0.5">↑ {fmt(monthlyChange)} this month</p>
           </div>
         </div>
 
@@ -320,7 +332,10 @@ export default function ChaseDashboard() {
               </div>
 
               <div>
-                {transactions.map((tx) => (
+                {transactions.length === 0 && (
+                  <p className="text-sm text-gray-400 py-4 text-center">No transactions yet.</p>
+                )}
+                {transactions.slice(0, 8).map((tx) => (
                   <TransactionRow key={tx.id} tx={tx} />
                 ))}
               </div>
@@ -366,10 +381,13 @@ export default function ChaseDashboard() {
             <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-black text-[#1a3a5c] tracking-tight">Spending This Month</h2>
-                <span className="text-xs text-gray-400 font-medium">May 2026</span>
+                <span className="text-xs text-gray-400 font-medium">{new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}</span>
               </div>
               <div className="space-y-3">
-                {spendingCategories.map((cat) => (
+                {spending.length === 0 && (
+                  <p className="text-xs text-gray-400">No spending this month yet.</p>
+                )}
+                {spending.map((cat) => (
                   <div key={cat.label}>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs font-semibold text-gray-600">{cat.label}</span>
@@ -409,15 +427,17 @@ export default function ChaseDashboard() {
                 <div className="relative w-20 h-20 flex-shrink-0">
                   <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
                     <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f0f0f0" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#117ACA" strokeWidth="3" strokeDasharray="78 100" strokeLinecap="round" />
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#117ACA" strokeWidth="3" strokeDasharray={`${Math.round((((creditScore ?? 0) - 300) / 550) * 100)} 100`} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-lg font-black text-[#1a3a5c]">748</span>
+                    <span className="text-lg font-black text-[#1a3a5c]">{creditScore ?? "—"}</span>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-black text-emerald-600">Very Good</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Updated May 1, 2026</p>
+                  <p className="text-sm font-black text-emerald-600">
+                    {creditScore == null ? "—" : creditScore >= 740 ? "Very Good" : creditScore >= 670 ? "Good" : creditScore >= 580 ? "Fair" : "Poor"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Updated {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                   <p className="text-xs text-gray-400">Range: 300–850</p>
                 </div>
               </div>

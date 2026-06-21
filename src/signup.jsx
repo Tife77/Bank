@@ -54,6 +54,11 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
+      // Fire the welcome email (best-effort, don't block the redirect).
+      supabase.functions.invoke("send-welcome", {
+        body: { name: `${form.first_name} ${form.last_name}`.trim() },
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      }).catch(() => {});
       navigate("/dashboard"); // email confirmation disabled — straight in
     } else {
       setNotice("Account created! Please check your email to confirm, then sign in.");
