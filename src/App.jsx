@@ -57,6 +57,7 @@ function CarouselSlider() {
       buttonClass:
         "bg-red-600 hover:bg-transparent text-white border border-transparent hover:border-white",
       bgStyle: { backgroundImage: `url(${banner2})` },
+      imageClass: "bg-cover bg-center bg-no-repeat",
     },
     {
       id: 3,
@@ -66,10 +67,11 @@ function CarouselSlider() {
       description:
         "Compare rates, manage policies, and stay on top of your auto and home insurance — all from one simple, free dashboard.",
       bgStyle: { backgroundImage: `url(${banner3})` },
+      imageClass: "bg-cover bg-center bg-no-repeat",
     },
   ];
 
-  
+
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -92,7 +94,7 @@ function CarouselSlider() {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="relative h-[620px] w-full">
+      <div className="relative h-[440px] w-full sm:h-[560px] lg:h-[620px]">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
@@ -103,23 +105,23 @@ function CarouselSlider() {
             }`}
           >
             <div
-              className={`absolute inset-0 ${slide.bgClass ?? ""} bg-cover bg-center`}
+              className={`absolute inset-0 ${slide.bgClass ?? ""} ${slide.imageClass ?? "bg-cover bg-center"}`}
               style={slide.bgStyle}
             />
             <div className="absolute inset-0 bg-black/20" />
-            <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-6 py-24 sm:px-8">
+            <div className="relative mx-auto flex h-full max-w-7xl items-center justify-center px-5 py-16 sm:px-8 sm:py-24">
               <div className="text-center text-white">
-                <h1 className="text-5xl font-extrabold tracking-[-0.04em] sm:text-8xl lg:text-9xl">
+                <h1 className="text-3xl font-extrabold sm:text-7xl lg:text-9xl">
                   {slide.title}
                 </h1>
-                <h2 className="mt-4 text-3xl font-light leading-tight sm:text-4xl lg:text-9xl">
+                <h2 className="mt-4 text-2xl font-light leading-tight sm:text-5xl lg:text-9xl">
                   {slide.subtitle}
                 </h2>
-                <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-100 font-semibold sm:text-sm">
+                <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-slate-100 font-semibold sm:text-base sm:leading-8">
                   {slide.description}
                 </p>
                 {slide.subtext && (
-                  <p className="mx-auto mt-0 max-w-4xl text-sm text-slate-100 font-semibold">
+                  <p className="mx-auto mt-0 max-w-4xl text-xs text-slate-100 font-semibold sm:text-sm">
                     {slide.subtext}
                   </p>
                 )}
@@ -216,13 +218,13 @@ function RatesSection() {
   const [hovered, setHovered] = useState(null);
   return (
     <section className="w-full bg-[#003865] relative overflow-hidden mt-24">
-      <div className="flex flex-col lg:flex-row w-full relative z-10">
-        <div className="flex flex-col justify-center px-32 py-8 lg:w-[52%]">
-          <p className="text-xl font-semibold text-white mb-3">Rates</p>
-          <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-5">
+      <div className="flex flex-col-reverse lg:flex-row w-full relative z-10">
+        <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-32 py-8 lg:w-[52%]">
+          <p className="text-lg sm:text-xl font-semibold text-white mb-3">Rates</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight mb-5">
             Get the best rate for you
           </h2>
-          <p className="text-blue-200 text-sm leading-relaxed mb-8 max-w-xs">
+          <p className="text-blue-200 text-xs sm:text-sm leading-relaxed mb-8 max-w-xs">
             One Nevada rates are lower than the national banks and have flexible terms to serve our members better.
           </p>
           <ul className="space-y-4 mb-10">
@@ -233,30 +235,30 @@ function RatesSection() {
                     <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                <span className="text-blue-100 text-sm font-medium">{item}</span>
+                <span className="text-blue-100 text-xs sm:text-sm font-medium">{item}</span>
               </li>
             ))}
           </ul>
-          <button className="w-fit bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold text-sm px-9 py-3.5 rounded-full shadow-lg">
+          <button className="w-fit bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white font-bold text-xs sm:text-sm px-9 py-3.5 rounded-full shadow-lg">
             Learn More
           </button>
         </div>
-        <div className="lg:w-[40%] bg-[#003865] grid grid-cols-2 gap-5 p-8">
+        <div className="w-full lg:w-[40%] bg-[#003865] grid grid-cols-2 gap-5 p-6 sm:p-8">
           {ratesData.map(({ label, value, note, icon }, i) => (
             <div
               key={label}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
-              className={`flex flex-col items-center justify-start px-6 py-10 rounded-2xl bg-white shadow-lg transition-transform duration-200 cursor-pointer ${hovered === i ? "-translate-y-1 shadow-xl" : ""}`}
+              className={`flex flex-col items-center justify-start px-4 sm:px-6 py-6 sm:py-10 rounded-2xl bg-white shadow-lg transition-transform duration-200 cursor-pointer ${hovered === i ? "-translate-y-1 shadow-xl" : ""}`}
             >
-              <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-5 border border-blue-100">
+              <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-blue-50 flex items-center justify-center mb-4 sm:mb-5 border border-blue-100">
                 {icon}
               </div>
-              <p className="text-center text-sm font-bold text-[#1a5fa8] leading-snug mb-1.5 max-w-[160px]">{label}</p>
-              <p className="text-xs text-[#1a5fa8] mb-4">as low as:</p>
+              <p className="text-center text-xs sm:text-sm font-bold text-[#1a5fa8] leading-snug mb-1.5 max-w-[160px]">{label}</p>
+              <p className="text-xs text-[#1a5fa8] mb-3 sm:mb-4">as low as:</p>
               <div className="flex items-baseline gap-0.5">
-                <span className="text-3xl font-black text-[#0b2550] tracking-tight">{value}</span>
-                <span className="text-lg font-bold text-[#1a5fa8] ml-1">{note}</span>
+                <span className="text-xl sm:text-3xl font-black text-[#0b2550] tracking-tight">{value}</span>
+                <span className="text-xs sm:text-lg font-bold text-[#1a5fa8] ml-1">{note}</span>
               </div>
             </div>
           ))}
@@ -277,14 +279,14 @@ function RatesSection() {
 // ── Blog Section ───────────────────────────────────────────────
 function BlogSection() {
   return (
-    <section className="w-full bg-gray-100 py-16 px-6 shadow-2xl">
+    <section className="w-full bg-gray-100 py-12 sm:py-16 px-6 shadow-2xl">
       <div className="max-w-5xl mx-auto">
         <div className="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col lg:flex-row">
-          <div className="lg:w-[45%] flex-shrink-0 overflow-hidden shadow-xl flex items-center justify-center bg-black min-h-[260px]">
-            <img src={fraud} alt="Account Takeover Fraud" className="w-full h-auto object-contain" />
+          <div className="w-full lg:w-[45%] flex-shrink-0 overflow-hidden shadow-xl flex items-center justify-center bg-black h-[250px] sm:h-[300px] lg:h-auto lg:min-h-[260px]">
+            <img src={fraud} alt="Account Takeover Fraud" className="w-full h-full object-contain" />
           </div>
-          <div className="flex-1 p-8 lg:p-10 flex flex-col justify-center">
-            <div className="flex items-center gap-2 text-gray-500 text-sm mb-4">
+          <div className="flex-1 p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+            <div className="flex items-center gap-2 text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
                 <rect x="1" y="2" width="14" height="13" rx="2" stroke="#6b7280" strokeWidth="1.5" />
                 <path d="M1 6h14" stroke="#6b7280" strokeWidth="1.5" />
@@ -294,10 +296,10 @@ function BlogSection() {
               </svg>
               <span className="font-medium">24 Feb</span>
             </div>
-            <h3 className="text-2xl lg:text-3xl font-bold text-[#003865] leading-snug mb-6">
+            <h3 className="text-xl sm:text-2xl lg:text-2xl font-bold text-[#003865] leading-snug mb-4 sm:mb-6">
               Account Takeover Fraud: How It Happens and How to Protect Yourself
             </h3>
-            <a href="#" className="inline-flex items-center gap-2 text-[#0070b8] font-bold text-sm tracking-widest uppercase hover:gap-3 transition-all group">
+            <a href="#" className="inline-flex items-center gap-2 text-[#0070b8] font-bold text-xs sm:text-sm tracking-widest uppercase hover:gap-3 transition-all group">
               Continue Reading
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="group-hover:translate-x-1 transition-transform">
                 <path d="M4 10h12M12 6l4 4-4 4" stroke="#0070b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -386,236 +388,444 @@ function NavDropdowns() {
   );
 }
 
-// ── Header ─────────────────────────────────────────────────────
-function Header() {
+// ── Fixed Bottom Bar ───────────────────────────────────────────
+function FixedBottomBar() {
   return (
-    <>
-      {/* Utility bar */}
-      <div className="w-full fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: "#003865" }}>
-        <div className="mx-auto max-w-full px-6 py-3 sm:px-8 lg:px-12">
-          <div className="flex flex-col gap-3 px-4 py-2 text-xs tracking-[0.15em] text-white sm:flex-row sm:items-center sm:justify-between">
-            <a href="#" className="font-bold text-yellow-400 hover:text-white hover:border-b-2 hover:border-white pb-1 transition">
-              FRAUD DON'T FALL FOR IT: We will never call, email, or text for personal info.
-            </a>
-            <div className="flex flex-wrap items-center gap-6 text-white whitespace-nowrap">
-              <span className="text-[12px] font-bold">Routing Number: 322484401</span>
-              <span className="w-px h-4 bg-slate-400" />
-              <a href="#" className="text-sm font-bold hover:text-slate-200 transition">Contact</a>
-              <span className="w-px h-4 bg-slate-400" />
-              <a href="#" className="inline-flex font-bold items-center gap-2 text-sm hover:text-slate-200 transition">ATMs/Branches</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main nav */}
-      <div className="w-full bg-white shadow-md fixed left-0 right-0 z-40" style={{ top: "48px" }}>
-        <div className="mx-auto flex max-w-full items-center justify-between gap-6 px-6 py-4 sm:px-8 lg:px-12">
-
-          {/* ── LOGO — SVG image (replaces text) ── */}
-          <div className="flex items-center">
-            <img
-              src={logo}
-              alt="One Nevada Credit Union"
-              className="h-12 w-auto object-contain"
-            />
-          </div>
-
-          <NavDropdowns />
-
-          <div className="flex items-center gap-4">
-            <button className="p-1.5 text-slate-400 hover:text-red-600 transition-colors duration-200 mb-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="2.5"
-          stroke="currentColor"
-          className="w-5 h-5" 
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.601Z"
-          />
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center px-4 sm:px-6 py-3 bg-[#008bd2] text-white shadow-[0_-4px_16px_rgba(0,0,0,0.12)] lg:hidden gap-6">
+      <Link to="/signin" className="flex items-center justify-center bg-red-700 hover:bg-red-800 text-white font-extrabold text-base sm:text-lg px-8 sm:px-10 py-2.5 rounded-full transition">
+        Log In
+      </Link>
+      <Link to="/signup" className="flex items-center justify-center gap-2 text-white font-bold text-sm sm:text-base hover:opacity-90 transition">
+        <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="9" cy="8" r="4" />
+          <path d="M2 21a7 7 0 0 1 11.5-5.3M16 17h6M19 14v6" />
         </svg>
-      </button>
-            <span className="h-6 w-px bg-slate-300" />
-             <Link to="/signup" className="text-blue-900 font-semibold hover:text-red-600 transition bg-transparent border-none">
-              Open an Account
-            </Link>
-    
-            <Link to="/signin" className="rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-md hover:bg-red-700 transition">
-              Log In
-            </Link>
-          </div>
-        </div>
-      </div>
-    </>
+        <span>Open an Account</span>
+      </Link>
+    </div>
   );
 }
 
+// ── Header ─────────────────────────────────────────────────────
+function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileNavItems = ["Personal Banking", "Loans", "Insurance", "Investment", "Resources"];
+
+  return (
+    <div className="fixed left-0 right-0 top-0 z-50 bg-white shadow-md">
+      <div className="w-full" style={{ backgroundColor: "#003865" }}>
+        <div className="mx-auto max-w-full px-4 py-2 sm:px-8 lg:px-12">
+          <div className="flex items-center justify-center text-center text-[10px] font-bold leading-snug tracking-[0.08em] sm:text-xs sm:tracking-[0.15em]">
+            <a
+              href="#"
+              className="max-w-full break-words pb-1 transition hover:border-b-2 hover:border-white"
+              style={{ color: "yellow" }}
+            >
+              FRAUD DON'T FALL FOR IT: We will never call, email, or text for personal info.
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full bg-white">
+        <div className="mx-auto flex max-w-full items-center justify-between gap-4 px-4 py-3 sm:px-8 lg:gap-6 lg:px-12 lg:py-4">
+          <Link to="/" className="flex min-w-0 items-center">
+            <img
+              src={logo}
+              alt="One Nevada Credit Union"
+              className="h-10 w-auto object-contain sm:h-12"
+            />
+          </Link>
+
+          <NavDropdowns />
+
+          <div className="hidden items-center gap-4 lg:flex">
+            <button className="p-1.5 text-slate-400 transition-colors duration-200 hover:text-red-600">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.601Z" />
+              </svg>
+            </button>
+            <span className="h-6 w-px bg-slate-300" />
+            <Link to="/signup" className="border-none bg-transparent font-semibold text-blue-900 transition hover:text-red-600">
+              Open an Account
+            </Link>
+            <Link to="/signin" className="rounded-full bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-red-700">
+              Log In
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-3 lg:hidden">
+            <button type="button" className="p-2 text-[#003865]" aria-label="Find a branch">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 21s7-5.2 7-12a7 7 0 0 0-14 0c0 6.8 7 12 7 12Z" />
+                <circle cx="12" cy="9" r="2.5" />
+              </svg>
+            </button>
+            <button type="button" className="p-2 text-[#003865]" aria-label="Search">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m21 21-5.2-5.2" />
+                <circle cx="10.5" cy="10.5" r="7.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="p-2 text-[#003865]"
+              aria-label="Open navigation menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              {mobileMenuOpen ? (
+                <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="2.3">
+                  <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.3">
+                  <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="max-h-[calc(100vh-106px)] overflow-y-auto border-t border-slate-100 bg-white text-[#003865] shadow-lg lg:hidden">
+            <nav className="px-6 py-4">
+              {mobileNavItems.map((item) => (
+                <a
+                  key={item}
+                  href="#"
+                  className="flex items-center justify-between border-b border-[#008bd2] py-4 text-2xl font-extrabold leading-none text-[#003865]"
+                >
+                  <span>{item}</span>
+                  <span className="text-5xl font-light leading-none text-[#008bd2]">+</span>
+                </a>
+              ))}
+            </nav>
+
+            <div className="px-6 pb-28 pt-8">
+              <div className="grid gap-8 text-lg font-bold text-[#008bd2]">
+                <a href="#" className="flex items-center gap-4">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.35 1.89.66 2.78a2 2 0 0 1-.45 2.11L8.05 9.88a16 16 0 0 0 6.07 6.07l1.27-1.27a2 2 0 0 1 2.11-.45c.89.31 1.82.53 2.78.66A2 2 0 0 1 22 16.92Z" />
+                  </svg>
+                  Contact
+                </a>
+                <a href="#" className="flex items-center gap-4">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M12 21s7-5.2 7-12a7 7 0 0 0-14 0c0 6.8 7 12 7 12Z" />
+                    <circle cx="12" cy="9" r="2.5" />
+                  </svg>
+                  ATMs/Branches
+                </a>
+                <a href="#" className="flex items-center gap-4">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M4 7h16v13H4z" />
+                    <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M4 12h16" />
+                  </svg>
+                  Careers
+                </a>
+                <Link to="/signin" className="flex items-center gap-4">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <circle cx="9" cy="8" r="4" />
+                    <path d="M2 21a7 7 0 0 1 11.5-5.3M16 17h6M19 14v6" />
+                  </svg>
+                  Log In
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+function NevadaMoreText(){
+
+  const [showMore,setShowMore] = useState(false);
+
+
+  return (
+
+    <div className="mt-5">
+
+
+      {showMore && (
+
+        <p className="text-base sm:text-lg leading-7 text-gray-700 mb-4">
+
+        Whether you need a new checking or savings account, a home mortgage,
+        a line of credit, or an auto loan, we can help. We believe the proper
+        guidance and support can lead to lifelong financial well-being.
+        Get started on the next step of your journey today.
+
+        </p>
+
+      )}
+
+
+      <button
+        onClick={()=>setShowMore(!showMore)}
+        className="flex items-center gap-2 text-red-600 font-bold text-sm uppercase"
+      >
+
+        {showMore ? "LESS" : "READ MORE"}
+
+
+        <span className="flex h-6 w-6 items-center justify-center rounded-full border border-red-600 text-red-600">
+
+          {showMore ? "-" : "+"}
+
+        </span>
+
+
+      </button>
+
+
+    </div>
+
+  )
+
+}
 // ── Home Page ──────────────────────────────────────────────────
 function HomePage() {
   return (
     <div className="min-h-screen bg-white text-slate-100">
       <Header />
+      <FixedBottomBar />
 
       {/* Spacer for fixed header */}
-      <div className="h-[112px]" />
+      <div className="h-[106px] sm:h-[112px]" />
 
       {/* Hero */}
       <div className="relative overflow-hidden">
         <CarouselSlider />
         <div className="relative z-20 w-full -mt-1">
-          <div className="w-full">
-            <div className="flex w-full items-center justify-center bg-[#c7d7e3] py-3 px-6 shadow-md">
-              {[{ label: "Apply for Loan", icon: "✓" }, { label: "Join", icon: "👤" }].map((item, index) => (
-                <div key={item.label} className={`flex items-center gap-4 ${index === 0 ? "mr-40" : ""}`}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl text-[#0070b8] shadow-sm transition-all duration-300 hover:bg-[#0070b8] hover:text-white cursor-pointer">
-                    {item.icon}
-                  </div>
-                  <p className="text-xl font-bold text-[#003865]">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+  <div className="w-full">
+
+    <div className="flex w-full items-center justify-center gap-10 bg-transparent px-4 py-5 sm:gap-24 sm:bg-[#c7d7e3] sm:px-6 sm:py-5">
+
+      {/* Apply Loan */}
+  <div className="flex items-center gap-3 sm:gap-5">
+
+  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#0070b8] bg-white text-[#0070b8] transition-all duration-300 hover:bg-[#0082CA] hover:text-white hover:border-[#0082CA] cursor-pointer">
+
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M5 12l4 4L19 6"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+
+  </div>
+
+  <p className="text-base sm:text-xl font-bold text-[#003865]">
+    Apply for Loan
+  </p>
+
+</div>
+
+
+      {/* Join */}
+<div className="flex items-center gap-3 sm:gap-5">
+
+  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#0070b8] bg-white text-[#0070b8] transition-all duration-300 hover:bg-[#0082CA] hover:text-white hover:border-[#0082CA] cursor-pointer">
+
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+      <circle cx="9" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
+      <path d="M3 21c0-4 3-7 7-7" stroke="currentColor" strokeWidth="2" />
+      <path d="M16 14v6M13 17h6" stroke="currentColor" strokeWidth="2" />
+    </svg>
+
+  </div>
+
+  <p className="text-base sm:text-xl font-bold text-[#003865]">
+    Join
+  </p>
+
+</div>
+
+    </div>
+
+  </div>
+</div>
       </div>
 
       {/* Nevada section */}
-      <div className="flex flex-col lg:flex-row w-full bg-white mt-14">
-        <div className="w-full lg:w-1/2">
-          <div style={{ backgroundImage: `url(${nevada})` }} className="h-[500px] w-full bg-cover bg-center" />
-        </div>
-        <div className="flex w-full lg:w-1/2 items-center px-8 py-16 lg:px-20">
-          <div className="max-w-xl">
-            <h2 className="text-5xl font-bold leading-tight text-[#003865]">The Nevada credit union you trust</h2>
-            <p className="mt-8 text-lg leading-8 text-gray-700">
-              At One Nevada Credit Union, we do more than offer basic banking. Our commitment to building a stronger Nevada starts with making financially savvy Nevadans—One at a time.
-            </p>
-            <button className="mt-10 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Join today</button>
-          </div>
-        </div>
-      </div>
+<div className="flex flex-col lg:flex-row w-full bg-white mt-14">
+
+  {/* Image */}
+  <div className="w-full lg:w-1/2">
+    <img
+      src={nevada}
+      alt="Nevada"
+      className="w-full h-[300px] sm:h-[400px] lg:h-[500px] object-cover"
+    />
+  </div>
+
+
+  {/* Text */}
+  <div className="flex w-full lg:w-1/2 items-center px-6 sm:px-10 lg:px-20 py-12">
+
+    <div className="max-w-xl">
+
+      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[#003865]">
+        The Nevada credit union you trust
+      </h2>
+
+
+      <p className="mt-6 text-base sm:text-lg leading-7 text-gray-700">
+        At One Nevada Credit Union, we do more than offer basic banking.
+        Our commitment to building a stronger Nevada starts with making financially savvy Nevadans—One at a time.
+      </p>
+
+
+      {/* Read More */}
+      <NevadaMoreText />
+
+
+    <button className="mt-8 w-fit rounded-full bg-red-700 px-7 py-3 text-base font-bold text-white transition hover:bg-red-800">
+  Join today
+</button>
+
+
+    </div>
+
+  </div>
+
+</div>
 
       <RatesSection />
 
       {/* Spend Wisely */}
       <div className="flex flex-col lg:flex-row w-full bg-white mt-14">
         <div className="w-full lg:w-1/2">
-          <div style={{ backgroundImage: `url(${simplify})` }} className="h-[450px] w-[80%] mx-auto lg:ml-28 bg-cover bg-center" />
+          <div style={{ backgroundImage: `url(${simplify})` }} className="h-[250px] sm:h-[350px] lg:h-[450px] w-[90%] sm:w-[80%] mx-auto lg:ml-28 bg-cover bg-center" />
         </div>
-        <div className="flex w-full lg:w-1/2 items-center px-0 py-16 lg:px-0 lg:pl-28">
-          <div className="max-w-full w-[80%] mx-auto lg:w-full lg:mx-0">
-            <p className="text-sm font-semibold leading-tight text-[#003865]">Spend Wisely</p>
-            <h2 className="text-5xl font-semibold leading-tight text-[#003865]">Simplify Your Life</h2>
-            <p className="mt-8 text-lg leading-8 text-gray-700">Get a One Nevada Credit Union checking account that fits your budget and lifestyle. We can help you spend wisely now, so you'll have more to spend later.</p>
-            <button className="mt-10 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
+        <div className="flex w-full lg:w-1/2 items-center px-6 sm:px-8 py-12 sm:py-16 lg:px-0 lg:pl-28">
+          <div className="max-w-full w-full">
+            <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]">Spend Wisely</p>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3">Simplify Your Life</h2>
+            <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700">Get a One Nevada Credit Union checking account that fits your budget and lifestyle. We can help you spend wisely now, so you'll have more to spend later.</p>
+            <button className="mt-8 sm:mt-10 rounded-full bg-red-700 px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
           </div>
         </div>
       </div>
 
+
+
       {/* Save Diligently */}
       <div className="flex flex-col-reverse lg:flex-row w-full bg-white mt-14">
-        <div className="flex w-full lg:w-1/2 items-center py-16 px-6 sm:px-12 md:px-20 lg:px-20 lg:pl-28">
+        <div className="flex w-full lg:w-1/2 items-center py-12 sm:py-16 px-6 sm:px-8 lg:px-20 lg:pl-28">
           <div className="max-w-xl">
-            <p className="text-sm font-semibold leading-tight text-[#003865]">Save Diligently</p>
-            <h2 className="text-4xl font-semibold leading-tight text-[#003865]">Start Building Your Future</h2>
-            <p className="mt-8 text-lg leading-8 text-gray-700">Building savings can mean starting slow and doing more over time. The more you save, the bigger your future can be. One Nevada Credit Union accounts are designed for you.</p>
-            <button className="mt-10 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
+            <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]">Save Diligently</p>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3">Start Building Your Future</h2>
+           <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700">Building savings can mean starting slow and doing more over time. The more you save, the bigger your future can be. One Nevada Credit Union accounts are designed for you.</p>
+            <button className="mt-8 sm:mt-10 rounded-full bg-red-700 px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
           </div>
         </div>
         <div className="w-full lg:w-1/2 flex items-center justify-center">
-          <div style={{ backgroundImage: `url(${save})` }} className="h-[450px] w-[80%] bg-cover bg-center" />
+          <div style={{ backgroundImage: `url(${save})` }} className="h-[250px] sm:h-[350px] lg:h-[450px] w-[90%] sm:w-[80%] bg-cover bg-center" />
         </div>
       </div>
+
+
 
       {/* Borrow Smartly */}
       <div className="flex flex-col lg:flex-row w-full bg-white mt-14">
         <div className="w-full lg:w-1/2">
-          <div style={{ backgroundImage: `url(${dreams})` }} className="h-[450px] w-[80%] mx-auto lg:ml-28 bg-cover bg-center" />
+          <div style={{ backgroundImage: `url(${dreams})` }} className="h-[250px] sm:h-[350px] lg:h-[450px] w-[90%] sm:w-[80%] mx-auto lg:ml-28 bg-cover bg-center" />
         </div>
-        <div className="flex w-full lg:w-1/2 items-center px-0 py-16 lg:px-0 lg:pl-28">
-          <div className="max-w-full w-[80%] mx-auto lg:w-full lg:mx-0">
-            <p className="text-xl font-semibold leading-tight text-[#003865]">Borrow Smartly</p>
-            <h2 className="text-4xl font-semibold leading-tight text-[#003865] mt-2">Dreams can (and do) come true</h2>
-            <p className="mt-8 text-lg leading-8 text-gray-700 tracking-tighter">A little help never hurt anyone. One Nevada Credit Union has loans for those buying a house, wanting a new car, or just needing to get to the next payday.</p>
-            <button className="mt-10 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
+        <div className="flex w-full lg:w-1/2 items-center px-6 sm:px-8 py-12 sm:py-16 lg:px-0 lg:pl-28">
+          <div className="max-w-full w-full">
+            <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]">Borrow Smartly</p>
+           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3">Dreams can (and do) come true</h2>
+            <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700">A little help never hurt anyone. One Nevada Credit Union has loans for those buying a house, wanting a new car, or just needing to get to the next payday.</p>
+            <button className="mt-8 sm:mt-10 rounded-full bg-red-700 px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
           </div>
         </div>
       </div>
 
+
+
       {/* Community */}
       <div className="flex flex-col-reverse lg:flex-row w-full bg-white mt-14">
-        <div className="flex w-full lg:w-1/2 items-center py-16 px-6 sm:px-12 md:px-20 lg:px-20 lg:pl-28">
+        <div className="flex w-full lg:w-1/2 items-center py-12 sm:py-16 px-6 sm:px-8 lg:px-20 lg:pl-28">
           <div className="max-w-xl">
-            <p className="text-xl font-semibold leading-tight text-[#003865]">Community</p>
-            <h2 className="text-4xl font-semibold leading-tight text-[#003865] mt-2">We're building a stronger Nevada—together</h2>
-            <p className="mt-8 text-lg leading-8 text-gray-700 tracking-tighter">One Nevada Credit Union believes in the power of Nevadans helping Nevadans, whether we're supporting a popular community event or offering scholarships to the bright young leaders of tomorrow.</p>
-            <button className="mt-10 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
+            <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]">Community</p>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3">We're building a stronger Nevada—together</h2>
+            <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700">One Nevada Credit Union believes in the power of Nevadans helping Nevadans, whether we're supporting a popular community event or offering scholarships to the bright young leaders of tomorrow.</p>
+            <button className="mt-8 sm:mt-10 rounded-full bg-red-700 px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
           </div>
         </div>
         <div className="w-full lg:w-1/2 flex items-center justify-center">
-          <div style={{ backgroundImage: `url(${community})` }} className="h-[450px] w-[80%] bg-cover bg-center" />
+          <div style={{ backgroundImage: `url(${community})` }} className="h-[250px] sm:h-[350px] lg:h-[450px] w-[90%] sm:w-[80%] bg-cover bg-center" />
         </div>
       </div>
+
+
 
       <div className="bg-[#dbe9f4]">
         {/* Digital Banking */}
         <div className="flex flex-col-reverse lg:flex-row w-full bg-[#dbe9f4] mt-14">
-          <div className="flex w-full lg:w-1/2 items-center py-16 px-6 sm:px-12 md:px-20 lg:px-20 lg:pl-28">
+          <div className="flex w-full lg:w-1/2 items-center py-12 sm:py-16 px-6 sm:px-8 lg:px-20 lg:pl-28">
             <div className="max-w-xl">
-              <p className="text-xl font-semibold leading-tight text-[#003865]">Digital Banking</p>
-              <h2 className="text-4xl font-semibold leading-tight text-[#003865] mt-2">Say goodbye to waiting in line</h2>
-              <p className="mt-8 text-lg leading-8 text-gray-700 tracking-tighter">With digital banking, you don't have to schedule constant trips to your local branch. You only need a desktop or phone app to get started with One Nevada remote banking.</p>
-              <ul className="space-y-4 mb-10 mt-8">
+              <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]">Digital Banking</p>
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3">Say goodbye to waiting in line</h2>
+              <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700">With digital banking, you don't have to schedule constant trips to your local branch. You only need a desktop or phone app to get started with One Nevada remote banking.</p>
+              <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 mt-6 sm:mt-8">
                 {digitalChecks.map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#003865] flex items-center justify-center">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </span>
-                    <span className="text-gray-700 text-base font-medium">{item}</span>
+                    <span className="text-gray-700 text-xs sm:text-sm lg:text-base font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
-              <button className="mt-6 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
-              <div className="flex flex-wrap items-center gap-4 mt-10">
+              <button className="mt-6 sm:mt-6 rounded-full bg-red-700 px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-8 sm:mt-10">
                 <a href="#" className="transition hover:scale-105">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-14 w-auto" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-10 sm:h-14 w-auto" />
                 </a>
                 <a href="#" className="transition hover:scale-105">
-                  <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" className="h-14 w-auto" />
+                  <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" className="h-10 sm:h-14 w-auto" />
                 </a>
               </div>
             </div>
           </div>
           <div className="w-full lg:w-1/2 flex items-center justify-center">
-            <div style={{ backgroundImage: `url(${digital})` }} className="h-[650px] w-[100%] bg-cover bg-center" />
+            <div style={{ backgroundImage: `url(${digital})` }} className="h-[350px] sm:h-[500px] lg:h-[650px] w-[100%] bg-cover bg-center" />
           </div>
         </div>
+
+         <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]"></p>
+       <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3"></h2>
+       <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700"></p>
 
         {/* Careers */}
         <div className="flex flex-col lg:flex-row w-full bg-[#dbe9f4] mt-14">
           <div className="w-full lg:w-1/2">
-            <div style={{ backgroundImage: `url(${careers})` }} className="h-[650px] w-[100%] mx-auto lg:ml-18 bg-cover bg-center" />
+            <div style={{ backgroundImage: `url(${careers})` }} className="h-[350px] sm:h-[500px] lg:h-[650px] w-[100%] mx-auto lg:ml-18 bg-cover bg-center" />
           </div>
-          <div className="flex w-full lg:w-1/2 items-center px-0 py-16 lg:px-0 lg:pl-16">
-            <div className="max-w-full w-[80%] mx-auto lg:w-full lg:mx-0">
-              <p className="text-xl font-semibold leading-tight text-[#003865]">Careers</p>
-              <h2 className="text-4xl font-semibold leading-tight text-[#003865] mt-2">Join the One Nevada team</h2>
-              <p className="mt-8 text-lg leading-8 text-gray-700 tracking-tighter">Looking for a career in banking? At One Nevada, employees matter, and we could have the perfect opportunity for you. If you join us, you'll enjoy a range of benefits:</p>
-              <ul className="space-y-4 mb-10 mt-8">
+          <div className="flex w-full lg:w-1/2 items-center px-6 sm:px-8 py-12 sm:py-16 lg:px-0 lg:pl-16">
+            <div className="max-w-full w-full">
+              <p className="text-[17px] sm:text-xl font-bold leading-tight text-[#006AA3]">Careers</p>
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight text-[#003865] mt-3">Join the One Nevada team</h2>
+              <p className="mt-6 sm:mt-8 text-sm sm:text-base lg:text-lg font-semibold leading-7 sm:leading-8 text-gray-700">Looking for a career in banking? At One Nevada, employees matter, and we could have the perfect opportunity for you. If you join us, you'll enjoy a range of benefits:</p>
+              <ul className="space-y-3 sm:space-y-4 mb-8 sm:mb-10 mt-6 sm:mt-8">
                 {careersChecks.map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#003865] flex items-center justify-center">
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </span>
-                    <span className="text-gray-700 text-base font-medium">{item}</span>
+                    <span className="text-gray-700 text-xs sm:text-sm lg:text-base font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
-              <button className="mt-10 rounded-full bg-red-700 px-10 py-4 text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
+              <button className="mt-8 sm:mt-10 rounded-full bg-red-700 px-8 sm:px-10 py-3 sm:py-4 text-sm sm:text-lg font-bold text-white transition hover:bg-red-800">Learn more</button>
             </div>
           </div>
         </div>
@@ -624,16 +834,29 @@ function HomePage() {
       <BlogSection />
 
       {/* FAQ Section */}
-      <div className="w-full bg-[#f3f3f3] py-16 flex flex-col items-center justify-center text-center">
-        <div className="px-8 py-2 w-[60%] mb-8">
-          <p className="text-[#0070b8] text-sm font-semibold">Our local experts can answer all your credit union queries.</p>
+      <div className="w-full bg-white py-12 sm:py-16 flex flex-col items-center justify-center text-center">
+        <div className="px-6 sm:px-8 py-2 w-[90%] sm:w-[80%] md:w-[60%] mb-6 sm:mb-8">
+          <p className="text-[#0070b8] text-xs sm:text-sm font-semibold">Our local experts can answer all your credit union queries.</p>
         </div>
-        <h2 className="text-4xl font-semibold text-[#003865] tracking-wide">One Nevada Credit Union FAQs</h2>
-        <button className="mt-12 rounded-full bg-red-700 px-8 py-2 text-xl font-bold text-white transition hover:bg-red-800">View All FAQs</button>
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[#003865] tracking-wide px-6 sm:px-0">One Nevada Credit Union FAQs</h2>
+        <button className="mt-8 sm:mt-12 rounded-full bg-red-700 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg lg:text-xl font-bold text-white transition hover:bg-red-800">View All FAQs</button>
+
+        <div className="mt-10 sm:mt-16 w-full px-6 sm:px-8 md:px-16 lg:px-32">
+          <div className="max-w-4xl mx-auto text-left">
+            <ul className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700 list-disc list-inside">
+              <li>APR = Annual Percentage Rate and is listed "as low as." Mortgage rates excluded; call for APR. APRs can increase after the loan consumption if the loan terms allow an APR to increase.</li>
+              <li>APY = Annual Percentage Yield</li>
+              <li>Dividends will be credited to your account and compounded every month. Fees could reduce the earnings on the account.</li>
+              <li>Rates are determined by individual credit standing, collateral age, collateral value, and loan term. No payments for 90 days are valid for qualified individuals who finance directly with One Nevada. Rates and repayment terms may vary when financing through a local dealership.</li>
+              <li>Federally Insured by NCUA. Equal Housing Opportunity.</li>
+            </ul>
+            <p className="mt-6 sm:mt-8 text-xs sm:text-sm font-semibold text-gray-700">Rates as of: Monday, June 22, 2026</p>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="w-full bg-[#002d5c] text-white">
+      <div className="w-full bg-[#002d5c] text-white pb-14 lg:pb-0">
         <div className="mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-[minmax(280px,320px)_1fr]">
             <div className="space-y-8">
@@ -781,6 +1004,3 @@ function App() {
 }
 
 export default App;
-
-// ── Chat Widget ────────────────────────────────────────────────
-
