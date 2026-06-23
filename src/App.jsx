@@ -30,6 +30,7 @@ import StatementsPage from "./statements.jsx";
 import WireMoneyPage from "./wiremoney.jsx";
 import AdminPage from "./admin.jsx";
 import { ProtectedRoute } from "./AuthContext.jsx";
+import MobileNav from "./MobileNav.jsx";
 
 
 
@@ -773,6 +774,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={<HomePage />} />
         </Routes>
+        <MobileNav />
       </div>
     </BrowserRouter>
   );
