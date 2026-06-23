@@ -128,6 +128,7 @@ export default function ChaseDashboard() {
       setAccounts(
         (accts || []).map((a) => ({
           id: a.id, type: a.type, number: a.account_number,
+          fullNumber: a.full_account_number,
           balance: Number(a.balance), available: Number(a.available),
           color: a.color, credit: a.is_credit,
         }))
@@ -359,7 +360,7 @@ export default function ChaseDashboard() {
                       { label: "Available Balance", val: fmt(current.available) },
                       { label: "Current Balance", val: fmt(current.balance) },
                       { label: "Account Type", val: current.type },
-                      { label: "Account Number", val: current.number },
+                      { label: "Account Number (share to receive)", val: current.fullNumber || current.number },
                     ].map(({ label, val }) => (
                       <div key={label} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
                         <span className="text-xs text-gray-400 font-medium">{label}</span>

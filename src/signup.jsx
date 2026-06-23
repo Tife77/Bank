@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { UserCheck, SquareCheck } from "lucide-react";
 import logo from "./assets/onenevada.svg";
 import { supabase } from "./supabaseClient";
+import { validateImage, uploadKycFile } from "./storage";
 
 const empty = {
   first_name: "", middle_name: "", last_name: "", date_of_birth: "",
@@ -14,12 +15,24 @@ export default function SignupPage() {
   const [documentationType, setDocumentationType] = useState("");
   const [ssnInput, setSsnInput] = useState("");
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [idFront, setIdFront] = useState(null);
+  const [idBack, setIdBack] = useState(null);
   const [form, setForm] = useState(empty);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  // Validate every image against the 500 KB cap before accepting it.
+  const pickImage = (setter) => (e) => {
+    const file = e.target.files?.[0];
+    if (!file) { setter(null); return; }
+    const v = validateImage(file);
+    if (v) { setError(v); e.target.value = ""; setter(null); return; }
+    setError("");
+    setter(file);
+  };
 
   const handleNext = () => {
     setError("");
@@ -54,6 +67,23 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
+      // Upload ID/KYC images to Supabase Storage + record the KYC submission.
+      try {
+        const frontPath = idFront ? await uploadKycFile(idFront, "id-front") : null;
+        const backPath = idBack ? await uploadKycFile(idBack, "id-back") : null;
+        const docPath = uploadedFile ? await uploadKycFile(uploadedFile, "income-doc") : null;
+        await supabase.from("kyc_submissions").insert({
+          user_id: data.user.id,
+          ssn_last4: ssnInput ? ssnInput.replace(/\D/g, "").slice(-4) : null,
+          doc_type: documentationType || "id",
+          id_front_path: frontPath,
+          id_back_path: backPath || docPath,
+          status: "pending",
+        });
+      } catch (uploadErr) {
+        // Don't block account creation on an upload hiccup — surface it, continue.
+        console.warn("KYC upload:", uploadErr.message);
+      }
       // Fire the welcome email (best-effort, don't block the redirect).
       supabase.functions.invoke("send-welcome", {
         body: { name: `${form.first_name} ${form.last_name}`.trim() },
@@ -308,11 +338,11 @@ export default function SignupPage() {
           </svg>
 
           <p className="text-sm font-medium text-gray-700">
-            Upload front of ID
+            {idFront ? idFront.name : "Upload front of ID"}
           </p>
 
           <p className="text-xs text-gray-500 mt-1">
-            JPG, PNG or PDF
+            JPG, PNG or PDF · max 500 KB
           </p>
 
         </div>
@@ -320,7 +350,8 @@ export default function SignupPage() {
         <input
           type="file"
           className="hidden"
-          accept=".jpg,.jpeg,.png,.pdf"
+          accept=".jpg,.jpeg,.png,.pdf,image/*"
+          onChange={pickImage(setIdFront)}
         />
       </label>
     </div>
@@ -350,11 +381,11 @@ export default function SignupPage() {
           </svg>
 
           <p className="text-sm font-medium text-gray-700">
-            Upload back of ID
+            {idBack ? idBack.name : "Upload back of ID"}
           </p>
 
           <p className="text-xs text-gray-500 mt-1">
-            JPG, PNG or PDF
+            JPG, PNG or PDF · max 500 KB
           </p>
 
         </div>
@@ -362,7 +393,8 @@ export default function SignupPage() {
         <input
           type="file"
           className="hidden"
-          accept=".jpg,.jpeg,.png,.pdf"
+          accept=".jpg,.jpeg,.png,.pdf,image/*"
+          onChange={pickImage(setIdBack)}
         />
       </label>
     </div>
@@ -620,7 +652,7 @@ export default function SignupPage() {
               </div>
               <input
                 type="file"
-                onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+                onChange={pickImage(setUploadedFile)}
                 className="hidden"
                 accept=".pdf,.doc,.docx"
               />
@@ -670,7 +702,7 @@ export default function SignupPage() {
               </div>
               <input
                 type="file"
-                onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+                onChange={pickImage(setUploadedFile)}
                 className="hidden"
                 accept=".pdf,.doc,.docx"
               />
@@ -721,7 +753,7 @@ export default function SignupPage() {
               </div>
               <input
                 type="file"
-                onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+                onChange={pickImage(setUploadedFile)}
                 className="hidden"
                 accept=".pdf,.doc,.docx"
               />

@@ -535,6 +535,7 @@ export default function TransferPage() {
   const [internalAccounts, setInternalAccounts] = useState([]);
   const [externalAccounts, setExternalAccounts] = useState(externalAccountsSeed);
   const [submitError, setSubmitError] = useState("");
+  const [lastTransfer, setLastTransfer] = useState({ credited: false, recipient: null });
 
   useEffect(() => {
     (async () => {
@@ -634,6 +635,7 @@ export default function TransferPage() {
       name: draftAccount.nickname || draftAccount.bankName,
       bank: draftAccount.bankName,
       mask: draftAccount.accountNumber.slice(-4),
+      fullNumber: draftAccount.accountNumber,   // keep the full number to transfer by
       delivery: "Real-time",
       type: "External account",
     };
@@ -645,20 +647,24 @@ export default function TransferPage() {
   const handleConfirmTransfer = async () => {
     setSubmitError("");
     const isInternal = toAccount?.type === "Internal account";
-    const { error } = await supabase.rpc("make_transfer", {
-      p_from: form.fromId,
-      p_amount: amount,
-      p_kind: isInternal ? "internal" : "external",
-      p_to_account: isInternal ? form.toId : null,
-      p_recipient_name: isInternal ? null : toAccount?.name,
-      p_recipient_bank: isInternal ? null : toAccount?.bank,
-      p_recipient_acct: isInternal ? null : toAccount?.mask,
-      p_memo: form.memo || null,
-    });
-    if (error) {
-      setSubmitError(error.message || "Transfer failed.");
-      setSheet(null);
-      return;
+
+    if (isInternal) {
+      // Between the user's own accounts
+      const { error } = await supabase.rpc("make_transfer", {
+        p_from: form.fromId, p_amount: amount, p_kind: "internal",
+        p_to_account: form.toId, p_memo: form.memo || null,
+      });
+      if (error) { setSubmitError(error.message || "Transfer failed."); setSheet(null); return; }
+      setLastTransfer({ credited: true, recipient: toAccount?.name });
+    } else {
+      // To another account by number — credits a One Nevada account if it matches, else external
+      const { data, error } = await supabase.rpc("transfer_by_number", {
+        p_from: form.fromId, p_amount: amount,
+        p_to_number: toAccount?.fullNumber || toAccount?.mask || "",
+        p_memo: form.memo || null,
+      });
+      if (error) { setSubmitError(error.message || "Transfer failed."); setSheet(null); return; }
+      setLastTransfer({ credited: !!data?.credited, recipient: data?.recipient || toAccount?.name });
     }
     setSheet(null);
     setStep("confirmation");
@@ -697,7 +703,9 @@ export default function TransferPage() {
             <p className="mt-6 text-sm font-semibold uppercase tracking-[0.25em] text-[#117ACA]">Transfer Completed</p>
             <h1 className="mt-3 text-3xl font-black text-[#07133B]">{formatCurrency(amount)} transfer sent</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">
-              Your transfer from {fromAccount.name} to {toAccount.name} has been completed. Confirmation TRF-74119 is available in activity.
+              {lastTransfer.credited
+                ? `Your transfer from ${fromAccount.name} was received by ${lastTransfer.recipient}. It is available in their account now.`
+                : `Your transfer from ${fromAccount.name} to ${toAccount.name} has been sent for external delivery.`}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button type="button" onClick={() => setStep("schedule")} className="rounded-full bg-[#041a49] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#0c2b70]">
